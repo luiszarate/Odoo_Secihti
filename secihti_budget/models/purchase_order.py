@@ -10,6 +10,13 @@ class PurchaseOrder(models.Model):
     sec_activity_id = fields.Many2one("sec.activity", string="Actividad SECIHTI")
     sec_rubro_id = fields.Many2one("sec.rubro", string="Rubro SECIHTI")
 
+    company_currency_id = fields.Many2one(
+        "res.currency",
+        string="Company Currency",
+        related="company_id.currency_id",
+        store=True,
+        readonly=True,
+    )
     sec_total_mxn_manual = fields.Monetary(string="Total MXN manual", currency_field="company_currency_id")
     sec_mxn_pending = fields.Boolean(compute="_compute_sec_mxn_pending", store=True)
 
