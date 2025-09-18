@@ -11,8 +11,7 @@
         "purchase",
         "mail",
     ],
-    "data": [
-        "data/sec_rubro_data.xml",
+    "data": ["data/sec_rubro_data.xml",
         "security/security.xml",
         "views/sec_project_views.xml",
         "views/sec_stage_views.xml",
