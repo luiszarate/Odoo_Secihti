@@ -12,7 +12,7 @@
         "mail",
     ],
     "data": [
-        "security/sec_security.xml",
+        "security/security.xml",
         "security/ir.model.access.csv",
         "data/sec_rubro_data.xml",
         "views/sec_menus.xml",
