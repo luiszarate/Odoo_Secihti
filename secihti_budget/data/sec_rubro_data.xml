@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="sec_rubro_adaptacion_lineas" model="sec.rubro">
+            <field name="name">Adaptación en líneas de producción</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_arrendamiento_vehiculos" model="sec.rubro">
+            <field name="name">Arrendamiento de vehículos y equipo</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_becas" model="sec.rubro">
+            <field name="name">Becas</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_capacitacion" model="sec.rubro">
+            <field name="name">Capacitación y entrenamiento</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_certificacion_calidad" model="sec.rubro">
+            <field name="name">Certificación sistemas de calidad</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_consumibles" model="sec.rubro">
+            <field name="name">Consumibles y accesorios</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_diseno_prototipos" model="sec.rubro">
+            <field name="name">Diseño y prototipos de prueba</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_equipo_procesamiento" model="sec.rubro">
+            <field name="name">Equipo de procesamiento de datos y periféricos</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_estudios_investigaciones" model="sec.rubro">
+            <field name="name">Estudios e investigaciones</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_gasto_auditoria" model="sec.rubro">
+            <field name="name">Gasto de auditoría</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_gastos_operacion" model="sec.rubro">
+            <field name="name">Gastos de operación</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_gastos_campo" model="sec.rubro">
+            <field name="name">Gastos de Trabajo de campo</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_gastos_transferencia" model="sec.rubro">
+            <field name="name">Gastos Transferencia de Tecnología</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_licencias" model="sec.rubro">
+            <field name="name">Licencias</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_mantenimiento" model="sec.rubro">
+            <field name="name">Mantenimiento de equipo</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_material_consumo" model="sec.rubro">
+            <field name="name">Material de consumo de uso directo</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_pasajes_viaticos" model="sec.rubro">
+            <field name="name">Pasajes y Viáticos</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_poliza_seguro" model="sec.rubro">
+            <field name="name">Póliza de seguro del equipo</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_prendas_seguridad" model="sec.rubro">
+            <field name="name">Prendas de seguridad y protección personal</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_reactivos_insumos" model="sec.rubro">
+            <field name="name">Reactivos e insumos</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_registros_certificaciones" model="sec.rubro">
+            <field name="name">Registros y certificaciones</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_registro_patentes" model="sec.rubro">
+            <field name="name">Registro de patentes y propiedad intelectual</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_servicios_externos" model="sec.rubro">
+            <field name="name">Servicios externos especializados</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_software" model="sec.rubro">
+            <field name="name">Software y Sistemas de Información</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_tramites_registro" model="sec.rubro">
+            <field name="name">Trámites de registro de propiedad</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_adecuaciones" model="sec.rubro">
+            <field name="name">Adecuaciones e instalaciones</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_articulos_publicaciones" model="sec.rubro">
+            <field name="name">Artículos, publicaciones y materiales</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_diseno_web" model="sec.rubro">
+            <field name="name">Diseño y alojamiento WEB</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_equipamiento_suministros" model="sec.rubro">
+            <field name="name">Equipamiento y suministros</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_equipo_computo" model="sec.rubro">
+            <field name="name">Equipo de cómputo y telecomunicaciones</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_equipo_laboratorio" model="sec.rubro">
+            <field name="name">Equipo de laboratorio</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_compra_hardware" model="sec.rubro">
+            <field name="name">Compra de hardware y software</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_maquinaria_equipo" model="sec.rubro">
+            <field name="name">Maquinaria y equipo</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_plantas_piloto" model="sec.rubro">
+            <field name="name">Plantas piloto de pruebas experimentales</field>
+            <field name="tipo_gasto">inversion</field>
+        </record>
+        <record id="sec_rubro_refacciones" model="sec.rubro">
+            <field name="name">Refacciones y accesorios</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+        <record id="sec_rubro_honorarios" model="sec.rubro">
+            <field name="name">Honorarios por servicios profesionales</field>
+            <field name="tipo_gasto">corriente</field>
+        </record>
+    </data>
+</odoo>

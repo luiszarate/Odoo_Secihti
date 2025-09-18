@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_project_tree" model="ir.ui.view">
+        <field name="name">sec.project.tree</field>
+        <field name="model">sec.project</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="amount_stages_total &gt; amount_total">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="amount_total"/>
+                <field name="amount_stages_total"/>
+                <field name="amount_executed_total"/>
+                <field name="amount_remaining_total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sec_project_form" model="ir.ui.view">
+        <field name="name">sec.project.form</field>
+        <field name="model">sec.project</field>
+        <field name="arch" type="xml">
+            <form string="Proyecto SECIHTI">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" class="oe_stat_button" name="action_view_purchase_orders"
+                                icon="fa-shopping-cart" attrs="{'invisible': [('purchase_order_count', '=', 0)]}">
+                            <field name="purchase_order_count" string="Órdenes" widget="statinfo"/>
+                        </button>
+                        <button type="object" class="oe_stat_button" name="action_view_pending_purchase_orders"
+                                icon="fa-exclamation-triangle" attrs="{'invisible': [('purchase_pending_count', '=', 0)]}">
+                            <field name="purchase_pending_count" string="MXN pendiente" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="description" widget="text"/>
+                        </group>
+                        <group>
+                            <field name="amount_total"/>
+                            <field name="amount_stages_total" readonly="1"/>
+                            <field name="amount_executed_total" readonly="1"/>
+                            <field name="amount_remaining_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="pct_programa"/>
+                            <field name="pct_concurrente"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-danger" role="alert" attrs="{'invisible': [('inconsistency_message', '=', False)]}">
+                        <field name="inconsistency_message" nolabel="1"/>
+                    </div>
+                    <group>
+                        <field name="amount_executed_total" widget="progressbar" options="{'max_field': 'amount_total'}"/>
+                    </group>
+                    <notebook>
+                        <page string="Etapas">
+                            <field name="stage_ids">
+                                <tree editable="bottom" decoration-danger="inconsistency_message">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="amount_programa"/>
+                                    <field name="amount_concurrente"/>
+                                    <field name="amount_total" readonly="1"/>
+                                    <field name="exec_total" readonly="1"/>
+                                    <field name="rem_total" readonly="1"/>
+                                    <field name="inconsistency_message" invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Actividades">
+                            <field name="activity_ids">
+                                <tree decoration-danger="traffic_light == 'orange'">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="stage_id"/>
+                                    <field name="amount_total" readonly="1"/>
+                                    <field name="exec_total" readonly="1"/>
+                                    <field name="traffic_light" widget="badge" options="{'class_field': 'traffic_light'}"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Órdenes de compra">
+                            <field name="purchase_order_ids" context="{'default_sec_project_id': active_id}" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="state"/>
+                                    <field name="partner_id"/>
+                                    <field name="date_order"/>
+                                    <field name="sec_stage_id"/>
+                                    <field name="sec_activity_id"/>
+                                    <field name="sec_rubro_id"/>
+                                    <field name="sec_total_mxn_manual"/>
+                                    <field name="sec_mxn_pending"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sec_project_search" model="ir.ui.view">
+        <field name="name">sec.project.search</field>
+        <field name="model">sec.project</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="over_budget" string="Presupuesto excedido" domain="[('inconsistency_message', '!=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sec_project" model="ir.actions.act_window">
+        <field name="name">Proyectos SECIHTI</field>
+        <field name="res_model">sec.project</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sec_project_tree"/>
+        <field name="search_view_id" ref="view_sec_project_search"/>
+        <field name="context">{"search_default_over_budget": 0}</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+</odoo>

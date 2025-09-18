@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_rubro_tree" model="ir.ui.view">
+        <field name="name">sec.rubro.tree</field>
+        <field name="model">sec.rubro</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="tipo_gasto"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sec_rubro_form" model="ir.ui.view">
+        <field name="name">sec.rubro.form</field>
+        <field name="model">sec.rubro</field>
+        <field name="arch" type="xml">
+            <form string="Rubro SECIHTI">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="tipo_gasto"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sec_rubro_search" model="ir.ui.view">
+        <field name="name">sec.rubro.search</field>
+        <field name="model">sec.rubro</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="archived" string="Archivados" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sec_rubro" model="ir.actions.act_window">
+        <field name="name">Rubros SECIHTI</field>
+        <field name="res_model">sec.rubro</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sec_rubro_tree"/>
+        <field name="search_view_id" ref="view_sec_rubro_search"/>
+        <field name="context">{"search_default_active": 1}</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+</odoo>
