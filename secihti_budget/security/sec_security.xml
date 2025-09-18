@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="0">
+        <record id="module_category_secihti" model="ir.module.category">
+            <field name="name">SECIHTI</field>
+            <field name="parent_id" ref="base.module_category_project_management"/>
+            <field name="sequence">25</field>
+        </record>
+
         <record id="group_sec_admin" model="res.groups">
-            <field name="name">Admin SECIHTI</field>
-            <field name="category_id" ref="base.module_category_hidden"/>
+            <field name="name">Administrador SECIHTI</field>
+            <field name="category_id" ref="secihti_budget.module_category_secihti"/>
+        </record>
+
+        <record id="base.group_system" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
         </record>
     </data>
 </odoo>
