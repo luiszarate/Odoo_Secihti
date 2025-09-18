@@ -51,7 +51,9 @@ class SecProject(models.Model):
     pct_concurrente = fields.Float(string="% Concurrente", tracking=True, default=50.0)
 
     stage_ids = fields.One2many("sec.stage", "project_id", string="Etapas")
-    activity_ids = fields.One2many("sec.activity", "project_id", string="Actividades")
+    sec_activity_ids = fields.One2many(
+        "sec.activity", "project_id", string="Actividades"
+    )
 
     amount_stages_total = fields.Monetary(
         compute="_compute_stage_amounts",
@@ -258,7 +260,7 @@ class SecStage(models.Model):
         currency_field="currency_id",
     )
 
-    activity_ids = fields.One2many("sec.activity", "stage_id")
+    sec_activity_ids = fields.One2many("sec.activity", "stage_id")
     activity_count = fields.Integer(compute="_compute_activity_count")
     inconsistency_message = fields.Char(compute="_compute_inconsistency_message")
 
@@ -268,7 +270,7 @@ class SecStage(models.Model):
             stage.amount_total = (stage.amount_programa or 0.0) + (stage.amount_concurrente or 0.0)
 
     @api.depends(
-        "activity_ids.exec_total",
+        "sec_activity_ids.exec_total",
         "project_id.pct_programa",
         "project_id.pct_concurrente",
         "project_id.stage_ids",
@@ -292,11 +294,11 @@ class SecStage(models.Model):
 
     def _compute_activity_count(self):
         for stage in self:
-            stage.activity_count = len(stage.activity_ids)
+            stage.activity_count = len(stage.sec_activity_ids)
 
     def _compute_inconsistency_message(self):
         for stage in self:
-            activities_budget = sum(stage.activity_ids.mapped("amount_total"))
+            activities_budget = sum(stage.sec_activity_ids.mapped("amount_total"))
             if stage.amount_total and activities_budget > stage.amount_total:
                 stage.inconsistency_message = _(
                     "La suma del presupuesto de actividades excede el presupuesto de la etapa."

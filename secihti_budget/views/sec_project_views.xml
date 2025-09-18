@@ -70,7 +70,7 @@
                             </field>
                         </page>
                         <page string="Actividades">
-                            <field name="activity_ids">
+                            <field name="sec_activity_ids">
                                 <tree decoration-danger="traffic_light == 'orange'">
                                     <field name="code"/>
                                     <field name="name"/>
