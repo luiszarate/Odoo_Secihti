@@ -204,7 +204,7 @@ class SecExportReportWizard(models.TransientModel):
                 sheet.write_number(row, 3, stage_total["concurrente"], formats["money"])
                 sheet.write_number(row, 4, stage_total["total"], formats["money"])
                 row += 1
-                for activity in stage.activity_ids:
+                for activity in stage.sec_activity_ids:
                     values = stage_values.get(activity.id, {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
                     sheet.write(row, 0, "Actividad", formats["text"])
                     sheet.write(row, 1, self._format_name(activity), formats["text"])
