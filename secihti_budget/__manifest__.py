@@ -25,4 +25,5 @@
         "views/export_report_wizard_views.xml",
     ],
     "application": True,
+    "installable": True,
 }
