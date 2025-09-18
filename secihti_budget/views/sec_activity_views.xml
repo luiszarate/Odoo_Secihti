@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_activity_tree" model="ir.ui.view">
+        <field name="name">sec.activity.tree</field>
+        <field name="model">sec.activity</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="traffic_light == 'orange'">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="stage_id"/>
+                <field name="project_id"/>
+                <field name="amount_programa"/>
+                <field name="amount_concurrente"/>
+                <field name="amount_total"/>
+                <field name="exec_total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sec_activity_form" model="ir.ui.view">
+        <field name="name">sec.activity.form</field>
+        <field name="model">sec.activity</field>
+        <field name="arch" type="xml">
+            <form string="Actividad SECIHTI">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="stage_id"/>
+                            <field name="project_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="amount_programa" readonly="1"/>
+                            <field name="amount_concurrente" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="exec_programa" readonly="1"/>
+                            <field name="exec_concurrente" readonly="1"/>
+                            <field name="exec_total" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="traffic_light" widget="badge"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="justif_general" widget="text"/>
+                    </group>
+                    <notebook>
+                        <page string="Presupuesto por rubro">
+                            <field name="budget_line_ids">
+                                <tree editable="bottom" decoration-danger="traffic_light == 'orange'">
+                                    <field name="name"/>
+                                    <field name="rubro_id"/>
+                                    <field name="tipo_gasto" readonly="1"/>
+                                    <field name="amount_programa"/>
+                                    <field name="amount_concurrente"/>
+                                    <field name="amount_total"/>
+                                    <field name="exec_total" readonly="1"/>
+                                    <field name="traffic_light"/>
+                                    <field name="justification"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Órdenes de compra">
+                            <field name="purchase_order_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="date_order"/>
+                                    <field name="sec_rubro_id"/>
+                                    <field name="sec_total_mxn_manual"/>
+                                    <field name="sec_mxn_pending"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sec_activity_search" model="ir.ui.view">
+        <field name="name">sec.activity.search</field>
+        <field name="model">sec.activity</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="stage_id"/>
+                <field name="project_id"/>
+                <filter name="over_budget" string="Sobreejercidas" domain="[('traffic_light', '=', 'orange')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sec_activity" model="ir.actions.act_window">
+        <field name="name">Actividades SECIHTI</field>
+        <field name="res_model">sec.activity</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sec_activity_tree"/>
+        <field name="search_view_id" ref="view_sec_activity_search"/>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+</odoo>

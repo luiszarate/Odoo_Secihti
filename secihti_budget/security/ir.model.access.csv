@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sec_project,access_sec_project,model_sec_project,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_stage,access_sec_stage,model_sec_stage,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_activity,access_sec_activity,model_sec_activity,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_activity_line,access_sec_activity_line,model_sec_activity_budget_line,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_rubro,access_sec_rubro,model_sec_rubro,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_project_read,access_sec_project_read,model_sec_project,base.group_user,1,0,0,0
+access_sec_stage_read,access_sec_stage_read,model_sec_stage,base.group_user,1,0,0,0
+access_sec_activity_read,access_sec_activity_read,model_sec_activity,base.group_user,1,0,0,0
+access_sec_activity_line_read,access_sec_activity_line_read,model_sec_activity_budget_line,base.group_user,1,0,0,0
+access_sec_rubro_read,access_sec_rubro_read,model_sec_rubro,base.group_user,1,0,0,0

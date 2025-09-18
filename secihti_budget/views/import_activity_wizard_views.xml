@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_import_activity_wizard" model="ir.ui.view">
+        <field name="name">sec.import.activity.wizard.form</field>
+        <field name="model">sec.import.activity.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Importar actividades" create="false" edit="false">
+                <group>
+                    <field name="project_id"/>
+                    <field name="data_file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                </group>
+                <footer>
+                    <button string="Importar" type="object" name="action_import" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sec_import_activity" model="ir.actions.act_window">
+        <field name="name">Importar actividades</field>
+        <field name="res_model">sec.import.activity.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sec_import_activity_wizard"/>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+</odoo>
