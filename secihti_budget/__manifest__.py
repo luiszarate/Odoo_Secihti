@@ -13,7 +13,6 @@
     ],
     "data": [
         "security/security.xml",
-        "security/ir.model.access.csv",
         "data/sec_rubro_data.xml",
         "views/sec_menus.xml",
         "views/sec_project_views.xml",
@@ -23,6 +22,7 @@
         "views/purchase_order_views.xml",
         "views/import_activity_wizard_views.xml",
         "views/export_report_wizard_views.xml",
+        "security/ir.model.access.csv",
     ],
     "application": True,
     "installable": True,
