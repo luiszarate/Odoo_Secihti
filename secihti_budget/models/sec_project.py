@@ -21,6 +21,7 @@ class SecRubro(models.Model):
     ], required=True, tracking=True, default="inversion")
     active = fields.Boolean(default=True)
     activity_line_ids = fields.One2many("sec.activity.budget.line", "rubro_id")
+    
 
     def unlink(self):
         for rubro in self:
@@ -73,6 +74,12 @@ class SecProject(models.Model):
     stage_count = fields.Integer(compute="_compute_stage_count")
 
     inconsistency_message = fields.Char(compute="_compute_inconsistency_message")
+
+    has_inconsistency = fields.Boolean(
+        string="¿Con inconsistencia?",
+        compute="_compute_has_inconsistency",
+        store=False,
+    )
 
     purchase_order_ids = fields.One2many(
         "purchase.order", "sec_project_id", string="Órdenes de compra"
@@ -140,6 +147,14 @@ class SecProject(models.Model):
                 )
             else:
                 project.inconsistency_message = False
+    
+    def _compute_has_inconsistency(self):
+        for project in self:
+            project.has_inconsistency = bool(project.inconsistency_message)
+
+    def _compute_has_inconsistency(self):
+        for project in self:
+            project.has_inconsistency = bool(project.inconsistency_message)
 
     def action_view_purchase_orders(self):
         self.ensure_one()

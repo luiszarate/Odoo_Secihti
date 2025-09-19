@@ -4,7 +4,7 @@
         <field name="name">sec.project.tree</field>
         <field name="model">sec.project</field>
         <field name="arch" type="xml">
-            <tree decoration-danger="inconsistency_message">
+            <tree decoration-danger="has_inconsistency">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="amount_total"/>
