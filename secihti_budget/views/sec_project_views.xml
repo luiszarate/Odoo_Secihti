@@ -116,7 +116,7 @@
             <search>
                 <field name="name"/>
                 <field name="code"/>
-                <filter name="over_budget" string="Presupuesto excedido" domain="[('inconsistency_message', '!=', False)]"/>
+                <filter name="over_budget" string="Presupuesto excedido" domain="[('has_inconsistency', '=', True)]"/>
             </search>
         </field>
     </record>

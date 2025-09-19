@@ -278,6 +278,11 @@ class SecStage(models.Model):
     sec_activity_ids = fields.One2many("sec.activity", "stage_id")
     activity_count = fields.Integer(compute="_compute_activity_count")
     inconsistency_message = fields.Char(compute="_compute_inconsistency_message")
+    has_inconsistency = fields.Boolean(
+        string="¿Con inconsistencia?",
+        compute="_compute_has_inconsistency",
+        store=False,
+    )
 
     @api.depends("amount_programa", "amount_concurrente")
     def _compute_totals(self):
@@ -344,6 +349,10 @@ class SecStage(models.Model):
                 )
             if total <= 0:
                 raise ValidationError(_("La etapa debe tener un presupuesto mayor que cero."))
+    
+    def _compute_has_inconsistency(self):
+        for stage in self:
+            stage.has_inconsistency = bool(stage.inconsistency_message)
 
 
 class SecActivity(models.Model):

@@ -4,7 +4,7 @@
         <field name="name">sec.stage.tree</field>
         <field name="model">sec.stage</field>
         <field name="arch" type="xml">
-            <tree decoration-danger="inconsistency_message">
+            <tree decoration-danger="has_inconsistency">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="project_id"/>
@@ -14,6 +14,7 @@
                 <field name="exec_total"/>
                 <field name="rem_total"/>
                 <field name="inconsistency_message" invisible="1"/>
+                <field name="has_inconsistency" invisible="1"/>
             </tree>
         </field>
     </record>
@@ -80,7 +81,7 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="project_id"/>
-                <filter name="over_budget" string="Presupuesto excedido" domain="[('inconsistency_message', '!=', False)]"/>
+                <filter name="over_budget" string="Presupuesto excedido" domain="[('has_inconsistency', '=', True)]"/>
             </search>
         </field>
     </record>
