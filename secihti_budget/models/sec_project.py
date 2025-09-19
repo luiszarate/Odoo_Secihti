@@ -109,6 +109,9 @@ class SecProject(models.Model):
         "purchase_order_ids.amount_total",
         "purchase_order_ids.currency_id",
         "purchase_order_ids.sec_total_mxn_manual",
+        "purchase_order_ids.sec_activity_id",
+        "purchase_order_ids.sec_stage_id",
+        "purchase_order_ids.sec_rubro_id",
     )
     def _compute_execution_amounts(self):
         execution = self._collect_execution_data()
@@ -298,6 +301,9 @@ class SecStage(models.Model):
         "project_id.purchase_order_ids.currency_id",
         "project_id.purchase_order_ids.amount_total",
         "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_activity_id",
+        "project_id.purchase_order_ids.sec_stage_id",
+        "project_id.purchase_order_ids.sec_rubro_id",
     )
     def _compute_execution(self):
         projects = self.mapped("project_id")
@@ -426,6 +432,9 @@ class SecActivity(models.Model):
         "project_id.purchase_order_ids.currency_id",
         "project_id.purchase_order_ids.amount_total",
         "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_activity_id",
+        "project_id.purchase_order_ids.sec_stage_id",
+        "project_id.purchase_order_ids.sec_rubro_id",
         "budget_line_ids.exec_total",
     )
     def _compute_execution(self):
@@ -518,6 +527,8 @@ class SecActivityBudgetLine(models.Model):
         "project_id.purchase_order_ids.currency_id",
         "project_id.purchase_order_ids.amount_total",
         "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_activity_id",
+        "project_id.purchase_order_ids.sec_rubro_id",
     )
     def _compute_execution(self):
         projects = self.mapped("project_id")
