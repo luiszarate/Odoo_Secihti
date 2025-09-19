@@ -9,23 +9,25 @@
       <!-- 1) (Opcional) Botones de estado de adjuntos dentro del button_box.
            Usamos un selector más robusto y NO afecta la instalación si el div existe. -->
       
-      <xpath expr="//div[@name='button_box']" position="inside">
+      <xpath expr="//sheet" position="inside">
+        <div class="oe_button_box" name="sec_button_box">
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_danger"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'red')]}">
-          <span class="o_stat_info text-danger">0 adjuntos</span>
+            <span class="o_stat_info text-danger">0 adjuntos</span>
         </button>
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_warning"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'orange')]}">
-          <span class="o_stat_info text-warning">1 adjunto</span>
+            <span class="o_stat_info text-warning">1 adjunto</span>
         </button>
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_success"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'green')]}">
-          <span class="o_stat_info text-success">Adjuntos</span>
+            <span class="o_stat_info text-success">Adjuntos</span>
         </button>
-      </xpath>
+        </div>
+    </xpath>
 
       <!--2) Alerta de MXN pendiente: insértala DESPUÉS del primer group
              (o bien antes del notebook) para evitar selector ambiguo. -->
