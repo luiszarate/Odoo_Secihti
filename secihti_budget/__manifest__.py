@@ -11,7 +11,7 @@
         "purchase",
         "mail",
     ],
-    "data": ["data/sec_rubro_data.xml",
+    "data": [
         "security/security.xml",
         "views/sec_project_views.xml",
         "views/sec_stage_views.xml",
@@ -22,6 +22,7 @@
         "views/export_report_wizard_views.xml",
         "views/sec_menus.xml",
         "security/ir.model.access.csv",
+        "data/sec_rubro_data.xml",
     ],
     "application": True,
     "installable": True,
