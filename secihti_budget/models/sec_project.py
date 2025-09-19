@@ -120,27 +120,40 @@ class SecProject(models.Model):
             project.amount_executed_total = values.get("total", 0.0)
             project.amount_remaining_total = project.amount_total - project.amount_executed_total
 
+    @api.depends(
+        "purchase_order_ids.state",
+        "purchase_order_ids.sec_project_id",
+        "purchase_order_ids.sec_mxn_pending",  # importante para refrescar al vuelo
+    )
     def _compute_purchase_orders(self):
         PurchaseOrder = self.env["purchase.order"]
-        grouped = PurchaseOrder.read_group(
+        grouped_total = PurchaseOrder.read_group(
             [
                 ("sec_project_id", "in", self.ids),
                 ("state", "in", ["purchase", "done"]),
             ],
-            ["sec_project_id", "sec_mxn_pending"],
-            ["sec_project_id", "sec_mxn_pending"],
+            ["sec_project_id"],
+            ["sec_project_id"],
         )
-        counts = defaultdict(int)
-        pending = defaultdict(int)
-        for row in grouped:
-            project_id = row["sec_project_id"][0]
-            count = row["sec_project_id_count"]
-            counts[project_id] += count
-            if row["sec_mxn_pending"]:
-                pending[project_id] += count
+        total_counts = {row["sec_project_id"][0]: row["sec_project_id_count"]
+                        for row in grouped_total if row.get("sec_project_id")}
+
+        # 2) Solo pendientes MXN
+        grouped_pending = PurchaseOrder.read_group(
+            [
+                ("sec_project_id", "in", self.ids),
+                ("state", "in", ["purchase", "done"]),
+                ("sec_mxn_pending", "=", True),
+            ],
+            ["sec_project_id"],
+            ["sec_project_id"],
+        )
+        pending_counts = {row["sec_project_id"][0]: row["sec_project_id_count"]
+                          for row in grouped_pending if row.get("sec_project_id")}
+
         for project in self:
-            project.purchase_order_count = counts.get(project.id, 0)
-            project.purchase_pending_count = pending.get(project.id, 0)
+            project.purchase_order_count = int(total_counts.get(project.id, 0))
+            project.purchase_pending_count = int(pending_counts.get(project.id, 0))
 
     def _compute_inconsistency_message(self):
         for project in self:
