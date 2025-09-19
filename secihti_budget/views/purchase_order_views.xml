@@ -62,7 +62,7 @@
     <field name="model">purchase.order</field>
     <field name="inherit_id" ref="purchase.purchase_order_tree"/>
     <field name="arch" type="xml">
-        <!-- Insertar después del total -->
+        
         <xpath expr="//tree//field[@name='amount_total']" position="after">
         <field name="sec_total_mxn_manual"/>
         </xpath>
