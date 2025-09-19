@@ -97,11 +97,24 @@ class PurchaseOrder(models.Model):
             return self.amount_total
         return self.sec_total_mxn_manual
 
+    def _sync_mxn_manual_for_company_currency(self):
+        for order in self:
+            if order.currency_id == order.company_currency_id:
+                # Copia el total de la OC al campo manual (en MXN) automáticamente
+                order.sec_total_mxn_manual = order.amount_total
+            
+    @api.onchange('currency_id', 'amount_total')
+    def _onchange_sync_mxn_manual(self):
+        # Al cambiar moneda o total, si es MXN, mantenemos sec_total_mxn_manual = amount_total
+        self._sync_mxn_manual_for_company_currency()
+    
+
     @api.model
     def create(self, vals):
         order = super().create(vals)
         # Si ya vienen actividad/rubro en create, crear subpartida
         order._ensure_budget_line_for_activity_rubro()
+        order._sync_mxn_manual_for_company_currency()
         return order
 
     def write(self, vals):
@@ -110,4 +123,6 @@ class PurchaseOrder(models.Model):
         if any(k in vals for k in ("sec_activity_id", "sec_rubro_id")):
             for order in self:
                 order._ensure_budget_line_for_activity_rubro()
+        if {'currency_id', 'order_line', 'company_id'}.intersection(vals.keys()):
+            self._sync_mxn_manual_for_company_currency()
         return res

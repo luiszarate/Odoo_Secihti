@@ -47,11 +47,9 @@
           <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
           <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
           <field name="sec_rubro_id"/>
-          <!-- Si después quieres forzar captura manual en moneda extranjera, descomenta: 
           <field name="sec_total_mxn_manual"
-                 attrs="{'required': [('currency_id', '!=', company_currency_id), ('sec_project_id', '!=', False)]}"/>
+                 attrs="{'readonly': [('currency_id', '=', company_currency_id)]}"/>
           <field name="sec_mxn_pending" readonly="1"/>
-          -->
         </group>
       </xpath>
 
