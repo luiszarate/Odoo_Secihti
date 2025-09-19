@@ -9,22 +9,22 @@
       <!-- 1) (Opcional) Botones de estado de adjuntos dentro del button_box.
            Usamos un selector más robusto y NO afecta la instalación si el div existe. -->
       
-      <xpath expr="//sheet" position="inside">
+      <xpath expr="//sheet/*[1]" position="before">
         <div class="oe_button_box" name="sec_button_box">
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_danger"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'red')]}">
-            <span class="o_stat_info text-danger">0 adjuntos</span>
+            <field name="message_attachment_count" string="Adjuntos" widget="statinfo"/>
         </button>
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_warning"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'orange')]}">
-            <span class="o_stat_info text-warning">1 adjunto</span>
+            <field name="message_attachment_count" string="Adjuntos" widget="statinfo"/>
         </button>
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_success"
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'green')]}">
-            <span class="o_stat_info text-success">Adjuntos</span>
+            <field name="message_attachment_count" string="Adjuntos" widget="statinfo"/>
         </button>
         </div>
     </xpath>
