@@ -73,6 +73,7 @@
                                     <field name="sec_rubro_id"/>
                                     <field name="sec_total_mxn_manual"/>
                                     <field name="sec_mxn_pending"/>
+                                    <field name="state" invisible="1"/>
                                 </tree>
                             </field>
                         </page>
