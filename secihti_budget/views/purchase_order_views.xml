@@ -27,7 +27,7 @@
         </button>
       </xpath> -->
 
-      <!----> 2) Alerta de MXN pendiente: insértala DESPUÉS del primer group
+      <!--2) Alerta de MXN pendiente: insértala DESPUÉS del primer group
              (o bien antes del notebook) para evitar selector ambiguo. -->
       <xpath expr="//sheet//group[1]" position="after">
         <div class="alert alert-danger" role="alert"
