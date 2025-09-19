@@ -8,6 +8,7 @@
 
       <!-- 1) (Opcional) Botones de estado de adjuntos dentro del button_box.
            Usamos un selector más robusto y NO afecta la instalación si el div existe. -->
+      <!--
       <xpath expr="//div[@name='button_box']" position="inside">
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_danger"
@@ -24,16 +25,16 @@
                 attrs="{'invisible': [('sec_attachment_state', '!=', 'green')]}">
           <span class="o_stat_info text-success">Adjuntos</span>
         </button>
-      </xpath>
+      </xpath> -->
 
       <!-- 2) Alerta de MXN pendiente: insértala DESPUÉS del primer group
              (o bien antes del notebook) para evitar selector ambiguo. -->
-      <xpath expr="//sheet//group[1]" position="after">
+      <!--xpath expr="//sheet//group[1]" position="after">
         <div class="alert alert-danger" role="alert"
              attrs="{'invisible': [('sec_mxn_pending', '=', False)]}">
           <span>MXN pendiente de captura para control presupuestal.</span>
         </div>
-      </xpath>
+      </xpath-->
 
       <!-- 3) Bloque SECIHTI: antes del notebook para que quede al final de la primera sección
              y a lo ancho. Usa col=4 para ganar espacio horizontal. -->
