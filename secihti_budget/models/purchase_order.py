@@ -30,6 +30,27 @@ class PurchaseOrder(models.Model):
         store=True,
     )
 
+    def _ensure_budget_line_for_activity_rubro(self):
+        """Si la actividad no tiene subpartida para el rubro, crearla con montos en 0."""
+        for order in self:
+            if not (order.sec_activity_id and order.sec_rubro_id):
+                continue
+            BudgetLine = self.env["sec.activity.budget.line"]
+            exists = BudgetLine.search([
+                ("activity_id", "=", order.sec_activity_id.id),
+                ("rubro_id", "=", order.sec_rubro_id.id),
+            ], limit=1)
+            if not exists:
+                BudgetLine.create({
+                    "activity_id": order.sec_activity_id.id,
+                    "rubro_id": order.sec_rubro_id.id,
+                    "name": "",                # descripción en blanco
+                    "amount_programa": 0.0,
+                    "amount_concurrente": 0.0, # amount_total se computa (=0)
+                })
+
+    
+
     @api.depends("sec_project_id", "currency_id", "sec_total_mxn_manual", "amount_total", "state")
     def _compute_sec_mxn_pending(self):
         for order in self:
@@ -76,3 +97,17 @@ class PurchaseOrder(models.Model):
             return self.amount_total
         return self.sec_total_mxn_manual
 
+    @api.model
+    def create(self, vals):
+        order = super().create(vals)
+        # Si ya vienen actividad/rubro en create, crear subpartida
+        order._ensure_budget_line_for_activity_rubro()
+        return order
+
+    def write(self, vals):
+        res = super().write(vals)
+        # Si cambian actividad o rubro, volver a asegurar subpartida
+        if any(k in vals for k in ("sec_activity_id", "sec_rubro_id")):
+            for order in self:
+                order._ensure_budget_line_for_activity_rubro()
+        return res
