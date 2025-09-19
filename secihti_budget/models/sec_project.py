@@ -78,7 +78,7 @@ class SecProject(models.Model):
     has_inconsistency = fields.Boolean(
         string="¿Con inconsistencia?",
         compute="_compute_has_inconsistency",
-        store=False,
+        store=True,
     )
 
     purchase_order_ids = fields.One2many(
@@ -281,7 +281,7 @@ class SecStage(models.Model):
     has_inconsistency = fields.Boolean(
         string="¿Con inconsistencia?",
         compute="_compute_has_inconsistency",
-        store=False,
+        store=True,
     )
 
     @api.depends("amount_programa", "amount_concurrente")
