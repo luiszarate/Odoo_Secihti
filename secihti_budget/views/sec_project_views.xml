@@ -12,6 +12,7 @@
                 <field name="amount_executed_total"/>
                 <field name="amount_remaining_total"/>
                 <field name="inconsistency_message" invisible="1"/>
+                <field name="has_inconsistency" invisible="1"/>
             </tree>
         </field>
     </record>
