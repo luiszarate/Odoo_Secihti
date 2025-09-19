@@ -22,7 +22,7 @@
                     <span>MXN pendiente de captura para control presupuestal.</span>
                 </div>
             </xpath> -->
-            <field expr="//field[@name='origin']" position="after">
+            <field name='origin' position="after">
                 <group string="SECIHTI">
                     <field name="sec_project_id" options="{'no_open': False}" context="{'default_company_id': company_id}"/>
                     <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
