@@ -81,6 +81,7 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="project_id"/>
+                <field name="has_inconsistency" invisible="1"/>
                 <filter name="over_budget" string="Presupuesto excedido" domain="[('has_inconsistency', '=', True)]"/>
             </search>
         </field>
