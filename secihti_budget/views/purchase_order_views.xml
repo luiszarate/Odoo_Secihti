@@ -7,16 +7,16 @@
     <field name="arch" type="xml">
 
       <!-- Inserta el grupo SECIHTI después de partner_id -->
-     <field name="origin" position="after">
+      <xpath expr="//field[@name='partner_id']" position="after">
         <group string="SECIHTI">
           <field name="sec_project_id" options="{'no_open': False}" context="{'default_company_id': company_id}"/>
           <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
           <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
           <field name="sec_rubro_id"/>
-          <field name="sec_total_mxn_manual" attrs="{'required': [('currency_id', '!=', company_currency_id), ('sec_project_id', '!=', False)]}"/>
-          <field name="sec_mxn_pending" readonly="1"/>
+          <!--<field name="sec_total_mxn_manual" attrs="{'required': [('currency_id', '!=', company_currency_id), ('sec_project_id', '!=', False)]}"/>-->
+          <!--<field name="sec_mxn_pending" readonly="1"/>-->
         </group>
-      </field>
+      </xpath>
 
     </field>
   </record>
