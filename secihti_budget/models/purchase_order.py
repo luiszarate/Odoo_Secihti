@@ -30,6 +30,13 @@ class PurchaseOrder(models.Model):
         store=True,
     )
 
+    sec_effective_mxn = fields.Monetary(
+        string="Importe MXN efectivo",
+        currency_field="company_currency_id",
+        compute="_compute_sec_effective_mxn",
+        store=True,
+    )
+
     def _ensure_budget_line_for_activity_rubro(self):
         """Si la actividad no tiene subpartida para el rubro, crearla con montos en 0."""
         for order in self:
@@ -89,13 +96,18 @@ class PurchaseOrder(models.Model):
             if order.sec_stage_id and order.sec_activity_id and order.sec_activity_id.stage_id != order.sec_stage_id:
                 order.sec_activity_id = False
 
+    @api.depends("currency_id", "company_currency_id", "amount_total", "sec_total_mxn_manual")
+    def _compute_sec_effective_mxn(self):
+        for order in self:
+            if order.currency_id == order.company_currency_id:
+                order.sec_effective_mxn = order.amount_total or 0.0
+            else:
+                order.sec_effective_mxn = order.sec_total_mxn_manual or 0.0
+
     def _sec_get_amount_mxn(self):
+        """Mantén este helper por compatibilidad, pero delega al compute."""
         self.ensure_one()
-        if not self.sec_project_id:
-            return 0.0
-        if self.currency_id == self.company_currency_id:
-            return self.amount_total
-        return self.sec_total_mxn_manual
+        return self.sec_effective_mxn or 0.0
 
     def _sync_mxn_manual_if_needed(self):
         """Si la moneda de la OC es la moneda de la compañía, iguala el manual MXN al total."""

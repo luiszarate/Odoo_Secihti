@@ -106,9 +106,7 @@ class SecProject(models.Model):
     @api.depends(
         "stage_ids.exec_total",
         "purchase_order_ids.state",
-        "purchase_order_ids.amount_total",
-        "purchase_order_ids.currency_id",
-        "purchase_order_ids.sec_total_mxn_manual",
+        "purchase_order_ids.sec_effective_mxn",   # 👈 clave
         "purchase_order_ids.sec_activity_id",
         "purchase_order_ids.sec_stage_id",
         "purchase_order_ids.sec_rubro_id",
@@ -194,52 +192,54 @@ class SecProject(models.Model):
     def _collect_execution_data(self, stage_ids=None, activity_ids=None, line_ids=None):
         project_ids = self.ids
         domain = [
-            ("state", "in", ["purchase", "done"]),
+            ("state", "in", ["purchase", "done"]),  # amplía si quieres contar draft/sent
             ("sec_project_id", "in", project_ids),
         ]
         PurchaseOrder = self.env["purchase.order"]
         orders = PurchaseOrder.search(domain)
+
         project_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
         stage_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
         activity_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
         line_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
+
         for order in orders:
-            if order.sec_mxn_pending:
+            amount_mxn = order.sec_effective_mxn or 0.0
+            if amount_mxn <= 0.0:
                 continue
-            amount_mxn = order._sec_get_amount_mxn()
-            if not amount_mxn:
-                continue
+
             project = order.sec_project_id
             if not project:
                 continue
-            programa_amount = amount_mxn * (project.pct_programa / 100.0)
-            concurrente_amount = amount_mxn * (project.pct_concurrente / 100.0)
-            total = programa_amount + concurrente_amount
-            project_data[project.id]["programa"] += programa_amount
-            project_data[project.id]["concurrente"] += concurrente_amount
+
+            programa = amount_mxn * (project.pct_programa / 100.0)
+            concurrente = amount_mxn * (project.pct_concurrente / 100.0)
+            total = programa + concurrente
+
+            project_data[project.id]["programa"] += programa
+            project_data[project.id]["concurrente"] += concurrente
             project_data[project.id]["total"] += total
+
             activity = order.sec_activity_id
             if activity:
-                activity_data[activity.id]["programa"] += programa_amount
-                activity_data[activity.id]["concurrente"] += concurrente_amount
+                activity_data[activity.id]["programa"] += programa
+                activity_data[activity.id]["concurrente"] += concurrente
                 activity_data[activity.id]["total"] += total
+
             stage = order.sec_stage_id or (activity.stage_id if activity else False)
             if stage:
-                stage_data[stage.id]["programa"] += programa_amount
-                stage_data[stage.id]["concurrente"] += concurrente_amount
+                stage_data[stage.id]["programa"] += programa
+                stage_data[stage.id]["concurrente"] += concurrente
                 stage_data[stage.id]["total"] += total
-            line = order.sec_rubro_id
-            if line and activity:
-                key = (activity.id, line.id)
-                line_data[key]["programa"] += programa_amount
-                line_data[key]["concurrente"] += concurrente_amount
+
+            rubro = order.sec_rubro_id
+            if rubro and activity:
+                key = (activity.id, rubro.id)
+                line_data[key]["programa"] += programa
+                line_data[key]["concurrente"] += concurrente
                 line_data[key]["total"] += total
-        return {
-            "project": project_data,
-            "stage": stage_data,
-            "activity": activity_data,
-            "line": line_data,
-        }
+
+        return {"project": project_data, "stage": stage_data, "activity": activity_data, "line": line_data}
 
 
 class SecStage(models.Model):
@@ -311,9 +311,7 @@ class SecStage(models.Model):
         "project_id.pct_concurrente",
         "project_id.stage_ids",
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.currency_id",
-        "project_id.purchase_order_ids.amount_total",
-        "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_effective_mxn",
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_stage_id",
         "project_id.purchase_order_ids.sec_rubro_id",
@@ -442,9 +440,7 @@ class SecActivity(models.Model):
 
     @api.depends(
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.currency_id",
-        "project_id.purchase_order_ids.amount_total",
-        "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_effective_mxn",  # 👈 clave
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_stage_id",
         "project_id.purchase_order_ids.sec_rubro_id",
@@ -537,9 +533,7 @@ class SecActivityBudgetLine(models.Model):
 
     @api.depends(
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.currency_id",
-        "project_id.purchase_order_ids.amount_total",
-        "project_id.purchase_order_ids.sec_total_mxn_manual",
+        "project_id.purchase_order_ids.sec_effective_mxn",  # 👈 clave
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_rubro_id",
     )
