@@ -47,9 +47,10 @@
           <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
           <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
           <field name="sec_rubro_id"/>
+          <!--
           <field name="sec_total_mxn_manual"
                  attrs="{'readonly': [('currency_id', '=', company_currency_id)]}"/>
-          <field name="sec_mxn_pending" readonly="1"/>
+          <field name="sec_mxn_pending" readonly="1"/>-->
         </group>
       </xpath>
 
