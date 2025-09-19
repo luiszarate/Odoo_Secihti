@@ -106,7 +106,9 @@ class SecProject(models.Model):
     @api.depends(
         "stage_ids.exec_total",
         "purchase_order_ids.state",
-        "purchase_order_ids.sec_effective_mxn",   # 👈 clave
+        "purchase_order_ids.amount_total",
+        "purchase_order_ids.currency_id",
+        "purchase_order_ids.sec_total_mxn_manual",
         "purchase_order_ids.sec_activity_id",
         "purchase_order_ids.sec_stage_id",
         "purchase_order_ids.sec_rubro_id",
@@ -197,7 +199,7 @@ class SecProject(models.Model):
         ]
         PurchaseOrder = self.env["purchase.order"]
         orders = PurchaseOrder.search(domain)
-
+        
         project_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
         stage_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
         activity_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
@@ -311,7 +313,9 @@ class SecStage(models.Model):
         "project_id.pct_concurrente",
         "project_id.stage_ids",
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.sec_effective_mxn",
+        "project_id.purchase_order_ids.currency_id",
+        "project_id.purchase_order_ids.amount_total",
+        "project_id.purchase_order_ids.sec_total_mxn_manual",
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_stage_id",
         "project_id.purchase_order_ids.sec_rubro_id",
@@ -440,7 +444,9 @@ class SecActivity(models.Model):
 
     @api.depends(
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.sec_effective_mxn",  # 👈 clave
+        "project_id.purchase_order_ids.currency_id",
+        "project_id.purchase_order_ids.amount_total",
+        "project_id.purchase_order_ids.sec_total_mxn_manual",
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_stage_id",
         "project_id.purchase_order_ids.sec_rubro_id",
@@ -533,7 +539,9 @@ class SecActivityBudgetLine(models.Model):
 
     @api.depends(
         "project_id.purchase_order_ids.state",
-        "project_id.purchase_order_ids.sec_effective_mxn",  # 👈 clave
+        "project_id.purchase_order_ids.currency_id",
+        "project_id.purchase_order_ids.amount_total",
+        "project_id.purchase_order_ids.sec_total_mxn_manual",
         "project_id.purchase_order_ids.sec_activity_id",
         "project_id.purchase_order_ids.sec_rubro_id",
     )
