@@ -13,6 +13,7 @@
                 <field name="amount_concurrente"/>
                 <field name="amount_total"/>
                 <field name="exec_total"/>
+                <field name="traffic_light" invisible="1"/>
             </tree>
         </field>
     </record>

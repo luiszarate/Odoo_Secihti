@@ -13,6 +13,7 @@
                 <field name="amount_total"/>
                 <field name="exec_total"/>
                 <field name="rem_total"/>
+                <field name="inconsistency_message" invisible="1"/>
             </tree>
         </field>
     </record>
