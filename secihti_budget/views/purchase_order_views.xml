@@ -56,7 +56,8 @@
     </field>
   </record>
 
-  <!--record id="view_purchase_order_tree_sec_total_mxn" model="ir.ui.view">
+<!--
+  <record id="view_purchase_order_tree_sec_total_mxn" model="ir.ui.view">
     <field name="name">purchase.order.tree.sec.total.mxn</field>
     <field name="model">purchase.order</field>
     <field name="inherit_id" ref="purchase.purchase_order_tree"/>
@@ -66,5 +67,6 @@
         <field name="sec_total_mxn_manual"/>
         </xpath>
     </field>
-    </record-->
+    </record>
+    -->
 </odoo>
