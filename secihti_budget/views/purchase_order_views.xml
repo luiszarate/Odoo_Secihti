@@ -1,37 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_purchase_order_form_sec" model="ir.ui.view">
-        <field name="name">purchase.order.form.sec</field>
-        <field name="model">purchase.order</field>
-        <field name="inherit_id" ref="purchase.purchase_order_form"/>
-        <field name="arch" type="xml">
-            
-            <xpath expr="//div[@name='button_box']" position="inside">
-                <button type="object" name="action_view_attached_docs" class="oe_stat_button o_button_danger" attrs="{'invisible': [('sec_attachment_state', '!=', 'red')]}">
-                    <span class="o_stat_info text-danger">0 adjuntos</span>
-                </button>
-                <button type="object" name="action_view_attached_docs" class="oe_stat_button o_button_warning" attrs="{'invisible': [('sec_attachment_state', '!=', 'orange')]}">
-                    <span class="o_stat_info text-warning">1 adjunto</span>
-                </button>
-                <button type="object" name="action_view_attached_docs" class="oe_stat_button o_button_success" attrs="{'invisible': [('sec_attachment_state', '!=', 'green')]}">
-                    <span class="o_stat_info text-success">Adjuntos</span>
-                </button>
-            </xpath>
-            <xpath expr="//sheet/group" position="before">
-                <div class="alert alert-danger" role="alert" attrs="{'invisible': [('sec_mxn_pending', '=', False)]}">
-                    <span>MXN pendiente de captura para control presupuestal.</span>
-                </div>
-            </xpath>
-            <xpath expr="//field[@name='partner_id']" position="after">
-                <group string="SECIHTI">
-                    <field name="sec_project_id" options="{'no_open': False}" context="{'default_company_id': company_id}"/>
-                    <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
-                    <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
-                    <field name="sec_rubro_id"/>
-                    <field name="sec_total_mxn_manual" attrs="{'required': [('currency_id', '!=', company_currency_id), ('sec_project_id', '!=', False)]}"/>
-                    <field name="sec_mxn_pending" readonly="1"/>
-                </group>
-            </xpath>
-        </field>
-    </record>
+  <record id="view_purchase_order_form_sec" model="ir.ui.view">
+    <field name="name">purchase.order.form.sec</field>
+    <field name="model">purchase.order</field>
+    <field name="inherit_id" ref="purchase.purchase_order_form"/>
+    <field name="arch" type="xml">
+
+      <!-- Inserta el grupo SECIHTI después de partner_id -->
+      <xpath expr="//field[@name='partner_id']" position="after">
+        <group string="SECIHTI">
+          <field name="sec_project_id" options="{'no_open': False}" context="{'default_company_id': company_id}"/>
+          <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
+          <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
+          <field name="sec_rubro_id"/>
+          <field name="sec_total_mxn_manual" attrs="{'required': [('currency_id', '!=', company_currency_id), ('sec_project_id', '!=', False)]}"/>
+          <field name="sec_mxn_pending" readonly="1"/>
+        </group>
+      </xpath>
+
+    </field>
+  </record>
 </odoo>
+
