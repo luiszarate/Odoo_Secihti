@@ -97,17 +97,40 @@ class PurchaseOrder(models.Model):
             return self.amount_total
         return self.sec_total_mxn_manual
 
+    def _sync_mxn_manual_if_needed(self):
+        """Si la moneda de la OC es la moneda de la compañía, iguala el manual MXN al total."""
+        for order in self:
+            if order.currency_id == order.company_currency_id:
+                # Evita bucles infinitos: solo escribe si cambia
+                if (order.sec_total_mxn_manual or 0.0) != (order.amount_total or 0.0):
+                    order.write({"sec_total_mxn_manual": order.amount_total})
+
+    @api.onchange("currency_id", "company_currency_id", "order_line")
+    def _onchange_sync_mxn_manual(self):
+        """En el formulario: si está en MXN, refleja aquí el total."""
+        for order in self:
+            if order.currency_id == order.company_currency_id:
+                order.sec_total_mxn_manual = order.amount_total
+
     @api.model
     def create(self, vals):
         order = super().create(vals)
-        # Si ya vienen actividad/rubro en create, crear subpartida
+        # Asegura subpartida (tu lógica existente)
         order._ensure_budget_line_for_activity_rubro()
+        # Sincroniza manual MXN si aplica
+        order._sync_mxn_manual_if_needed()
         return order
 
     def write(self, vals):
         res = super().write(vals)
-        # Si cambian actividad o rubro, volver a asegurar subpartida
+        # Si cambió moneda o líneas, sincroniza en MXN
+        if any(k in vals for k in ("currency_id", "order_line")):
+            for order in self:
+                order._sync_mxn_manual_if_needed()
+        # Si cambió actividad/rubro, asegura subpartida (tu lógica existente)
         if any(k in vals for k in ("sec_activity_id", "sec_rubro_id")):
             for order in self:
                 order._ensure_budget_line_for_activity_rubro()
         return res
+
+    
