@@ -9,7 +9,7 @@
       <!-- 1) (Opcional) Botones de estado de adjuntos dentro del button_box.
            Usamos un selector más robusto y NO afecta la instalación si el div existe. -->
       
-      <xpath expr="//sheet/*[1]" position="before">
+      <!--xpath expr="//sheet/*[1]" position="before">
         <div class="oe_button_box" name="sec_button_box">
         <button type="object" name="action_view_attached_docs"
                 class="oe_stat_button o_button_danger"
@@ -27,7 +27,7 @@
             <field name="message_attachment_count" string="Adjuntos" widget="statinfo"/>
         </button>
         </div>
-    </xpath>
+    </xpath-->
 
       <!--2) Alerta de MXN pendiente: insértala DESPUÉS del primer group
              (o bien antes del notebook) para evitar selector ambiguo. -->
