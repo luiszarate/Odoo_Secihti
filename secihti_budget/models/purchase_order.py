@@ -109,7 +109,7 @@ class PurchaseOrder(models.Model):
             return self.amount_total
         return self.sec_total_mxn_manual
 
-    @api.depends(
+    """ @api.depends(
         "sec_project_id",
         "currency_id",
         "company_currency_id",
@@ -125,6 +125,21 @@ class PurchaseOrder(models.Model):
                 order.sec_effective_mxn = order.amount_total
             else:
                 order.sec_effective_mxn = order.sec_total_mxn_manual
+    """
+
+    @api.depends("currency_id", "company_currency_id", "amount_total", "sec_total_mxn_manual")
+    def _compute_sec_effective_mxn(self):
+        for order in self:
+            if order.currency_id == order.company_currency_id:
+                order.sec_effective_mxn = order.amount_total or 0.0
+            else:
+                order.sec_effective_mxn = order.sec_total_mxn_manual or 0.0
+
+    def _sec_get_amount_mxn(self):
+        """Mantén este helper por compatibilidad, pero delega al compute."""
+        self.ensure_one()
+        return self.sec_effective_mxn or 0.0
+
 
     def _sync_mxn_manual_if_needed(self):
         """Si la moneda de la OC es la moneda de la compañía, iguala el manual MXN al total."""

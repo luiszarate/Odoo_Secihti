@@ -206,7 +206,8 @@ class SecProject(models.Model):
         line_data = defaultdict(lambda: {"programa": 0.0, "concurrente": 0.0, "total": 0.0})
 
         for order in orders:
-            amount_mxn = order.sec_effective_mxn or 0.0
+            #amount_mxn = order.sec_effective_mxn or 0.0
+            amount_mxn = order.sec_total_mxn_manual or 0.0
             if amount_mxn <= 0.0:
                 continue
 
