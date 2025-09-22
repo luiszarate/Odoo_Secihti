@@ -18,6 +18,12 @@ class PurchaseOrder(models.Model):
         readonly=True,
     )
     sec_total_mxn_manual = fields.Monetary(string="Total MXN manual", currency_field="company_currency_id")
+    sec_effective_mxn = fields.Monetary(
+        string="Total MXN efectivo",
+        compute="_compute_sec_effective_mxn",
+        store=True,
+        currency_field="company_currency_id",
+    )
     sec_mxn_pending = fields.Boolean(compute="_compute_sec_mxn_pending", store=True)
 
     sec_attachment_state = fields.Selection(
@@ -102,6 +108,23 @@ class PurchaseOrder(models.Model):
         if self.currency_id == self.company_currency_id:
             return self.amount_total
         return self.sec_total_mxn_manual
+
+    @api.depends(
+        "sec_project_id",
+        "currency_id",
+        "company_currency_id",
+        "amount_total",
+        "sec_total_mxn_manual",
+    )
+    def _compute_sec_effective_mxn(self):
+        for order in self:
+            if not order.sec_project_id:
+                order.sec_effective_mxn = 0.0
+                continue
+            if order.currency_id == order.company_currency_id:
+                order.sec_effective_mxn = order.amount_total
+            else:
+                order.sec_effective_mxn = order.sec_total_mxn_manual
 
     def _sync_mxn_manual_if_needed(self):
         """Si la moneda de la OC es la moneda de la compañía, iguala el manual MXN al total."""
