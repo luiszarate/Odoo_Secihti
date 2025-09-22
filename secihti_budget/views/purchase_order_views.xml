@@ -68,7 +68,7 @@
       <xpath expr="//search" position="inside">
         <separator/>
         <field name="sec_project_id"/>
-        <filter name="sec_project_set" string="Proyecto asignado" domain="[('sec_project_id', '!=', False)]"/>
+        <filter name="sec_project_set" string="Proyecto SECIHTI asignado" domain="[('sec_project_id', '!=', False)]"/>
         <field name="sec_stage_id"/>
         <field name="sec_activity_id"/>
         <field name="sec_rubro_id"/>
