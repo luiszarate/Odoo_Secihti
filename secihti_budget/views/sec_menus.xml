@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_sec_root" name="SECIHTI" sequence="10" groups="secihti_budget.group_sec_admin" web_icon="base,static/description/icon.png"/>
+    <menuitem id="menu_sec_root" name="SECIHTI" sequence="10" groups="secihti_budget.group_sec_admin" web_icon="secihti_budget,static/description/icon.png"/>
 
     <menuitem id="menu_sec_projects" name="Proyectos" parent="menu_sec_root" action="action_sec_project" sequence="10" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_stages" name="Etapas" parent="menu_sec_root" action="action_sec_stage" sequence="20" groups="secihti_budget.group_sec_admin"/>

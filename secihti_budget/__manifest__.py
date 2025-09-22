@@ -25,5 +25,6 @@
         "data/sec_rubro_data.xml",
     ],
     "application": True,
+    "icon": "/secihti_budget/static/description/icon.png",
     "installable": True,
 }
