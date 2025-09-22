@@ -37,6 +37,14 @@ class PurchaseOrder(models.Model):
     )
     
 
+    @api.model
+    def _setup_complete(self):
+        super()._setup_complete()
+        field = self._fields.get("x_payment_method")
+        new_option = ("debito_secihti", "Tarjeta de Débito Secihti")
+        if field and isinstance(field.selection, list) and new_option not in field.selection:
+            field.selection.append(new_option)
+
     def _ensure_budget_line_for_activity_rubro(self):
         """Si la actividad no tiene subpartida para el rubro, crearla con montos en 0."""
         for order in self:
