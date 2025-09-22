@@ -77,12 +77,12 @@
         <filter name="group_by_sec_stage" string="Agrupar por Etapa SECIHTI" context="{'group_by': 'sec_stage_id'}"/>
         <filter name="group_by_sec_activity" string="Agrupar por Actividad SECIHTI" context="{'group_by': 'sec_activity_id'}"/>
         <filter name="group_by_sec_rubro" string="Agrupar por Rubro SECIHTI" context="{'group_by': 'sec_rubro_id'}"/>
-        <searchpanel>
+        <!--searchpanel>
           <field name="sec_project_id" string="Proyecto"/>
           <field name="sec_stage_id" string="Etapa"/>
           <field name="sec_activity_id" string="Actividad"/>
           <field name="sec_rubro_id" string="Rubro"/>
-        </searchpanel>
+        </searchpanel-->
       </xpath>
     </field>
   </record>
