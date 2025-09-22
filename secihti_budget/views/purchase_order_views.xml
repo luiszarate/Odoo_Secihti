@@ -68,6 +68,7 @@
       <xpath expr="//search" position="inside">
         <separator/>
         <field name="sec_project_id"/>
+        <filter name="sec_project_set" string="Proyecto asignado" domain="[('sec_project_id', '!=', False)]"/>
         <field name="sec_stage_id"/>
         <field name="sec_activity_id"/>
         <field name="sec_rubro_id"/>
@@ -76,6 +77,12 @@
         <filter name="group_by_sec_stage" string="Agrupar por Etapa SECIHTI" context="{'group_by': 'sec_stage_id'}"/>
         <filter name="group_by_sec_activity" string="Agrupar por Actividad SECIHTI" context="{'group_by': 'sec_activity_id'}"/>
         <filter name="group_by_sec_rubro" string="Agrupar por Rubro SECIHTI" context="{'group_by': 'sec_rubro_id'}"/>
+        <searchpanel>
+          <field name="sec_project_id" string="Proyecto"/>
+          <field name="sec_stage_id" string="Etapa"/>
+          <field name="sec_activity_id" string="Actividad"/>
+          <field name="sec_rubro_id" string="Rubro"/>
+        </searchpanel>
       </xpath>
     </field>
   </record>
