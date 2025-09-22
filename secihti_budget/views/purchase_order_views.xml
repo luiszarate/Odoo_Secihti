@@ -60,6 +60,26 @@
     </field>
   </record>
 
+  <record id="view_purchase_order_search_sec" model="ir.ui.view">
+    <field name="name">purchase.order.search.sec</field>
+    <field name="model">purchase.order</field>
+    <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+    <field name="arch" type="xml">
+      <xpath expr="//search" position="inside">
+        <separator/>
+        <field name="sec_project_id"/>
+        <field name="sec_stage_id"/>
+        <field name="sec_activity_id"/>
+        <field name="sec_rubro_id"/>
+        <separator/>
+        <filter name="group_by_sec_project" string="Agrupar por Proyecto SECIHTI" context="{'group_by': 'sec_project_id'}"/>
+        <filter name="group_by_sec_stage" string="Agrupar por Etapa SECIHTI" context="{'group_by': 'sec_stage_id'}"/>
+        <filter name="group_by_sec_activity" string="Agrupar por Actividad SECIHTI" context="{'group_by': 'sec_activity_id'}"/>
+        <filter name="group_by_sec_rubro" string="Agrupar por Rubro SECIHTI" context="{'group_by': 'sec_rubro_id'}"/>
+      </xpath>
+    </field>
+  </record>
+
 <!--
   <record id="view_purchase_order_tree_sec_total_mxn" model="ir.ui.view">
     <field name="name">purchase.order.tree.sec.total.mxn</field>
