@@ -15,5 +15,9 @@
         <record id="base.group_system" model="res.groups">
             <field name="implied_ids" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
         </record>
+
+        <record id="purchase.group_purchase_manager" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+        </record>
     </data>
 </odoo>
