@@ -44,11 +44,16 @@
         <group string="SECIHTI" col="4">
           <field name="sec_project_id" options="{'no_open': False}"
                  context="{'default_company_id': company_id}"/>
-          <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"/>
-          <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"/>
-          <field name="sec_rubro_id"/>
-          <field name="sec_total_mxn_manual"/>
-          <field name="sec_mxn_pending" readonly="1"/>
+          <field name="sec_stage_id" domain="[('project_id', '=', sec_project_id)]"
+                 attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
+          <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"
+                 attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
+          <field name="sec_rubro_id"
+                 attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
+          <field name="sec_total_mxn_manual"
+                 attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
+          <field name="sec_mxn_pending" readonly="1"
+                 attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
         </group>
       </xpath>
 

@@ -79,6 +79,11 @@ class PurchaseOrder(models.Model):
     @api.onchange("sec_project_id")
     def _onchange_project(self):
         for order in self:
+            if not order.sec_project_id:
+                order.sec_stage_id = False
+                order.sec_activity_id = False
+                order.sec_rubro_id = False
+                continue
             if order.sec_stage_id and order.sec_stage_id.project_id != order.sec_project_id:
                 order.sec_stage_id = False
             if order.sec_activity_id and order.sec_activity_id.project_id != order.sec_project_id:
