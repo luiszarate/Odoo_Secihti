@@ -578,6 +578,20 @@ class SecActivityBudgetLine(models.Model):
     )
     justification = fields.Text(string="Justificación específica")
 
+    def name_get(self):
+        result = []
+        for line in self:
+            parts = []
+            if line.activity_id:
+                parts.append(line.activity_id.display_name)
+            if line.rubro_id:
+                parts.append(line.rubro_id.display_name)
+            if line.name:
+                parts.append(line.name)
+            display_name = " - ".join(parts) if parts else str(line.id)
+            result.append((line.id, display_name))
+        return result
+
     @api.depends("amount_programa", "amount_concurrente")
     def _compute_total(self):
         for line in self:
