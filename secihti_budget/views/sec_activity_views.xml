@@ -85,13 +85,13 @@
                                                 <field name="project_id" readonly="1"/>
                                             </group>
                                             <group>
-                                                <field name="line_from_id" domain="[('activity_id', '=', activity_id)]"/>
-                                                <field name="line_to_id" domain="[('activity_id', '=', activity_id)]"/>
+                                                <field name="line_from_id" domain="[('stage_id', '=', activity_id and activity_id.stage_id.id)]"/>
+                                                <field name="line_to_id" domain="[('stage_id', '=', activity_id and activity_id.stage_id.id)]"/>
                                             </group>
                                             <group>
-                                                <field name="amount_programa"/>
-                                                <field name="amount_concurrente"/>
-                                                <field name="amount"/>
+                                                <field name="amount_programa" readonly="1"/>
+                                                <field name="amount_concurrente" readonly="1"/>
+                                                <field name="amount" attrs="{'readonly': [('state', '=', 'confirmed')]}"/>
                                             </group>
                                         </group>
                                         <group>
