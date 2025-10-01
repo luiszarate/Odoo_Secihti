@@ -577,7 +577,7 @@ class SecActivityBudgetLine(models.Model):
         store=True,
     )
     justification = fields.Text(string="Justificación específica")
-
+"""
     def name_get(self):
         result = []
         for line in self:
@@ -591,7 +591,7 @@ class SecActivityBudgetLine(models.Model):
             display_name = " - ".join(parts) if parts else str(line.id)
             result.append((line.id, display_name))
         return result
-
+"""
     @api.depends("amount_programa", "amount_concurrente")
     def _compute_total(self):
         for line in self:
