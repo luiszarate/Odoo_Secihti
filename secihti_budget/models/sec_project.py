@@ -575,8 +575,14 @@ class SecActivityBudgetLine(models.Model):
     traffic_light = fields.Selection(
         [
             ("green", "Dentro del presupuesto"),
-            ("orange", "Sobreejercido"),
+            ("orange_over", "Sobreejercido"),
+            ("orange_transfer", "Con transferencia entre rubros"),
         ],
+        compute="_compute_traffic_light",
+        store=True,
+    )
+    traffic_light_color = fields.Selection(
+        [("green", "Verde"), ("orange", "Naranja")],
         compute="_compute_traffic_light",
         store=True,
     )
@@ -629,13 +635,39 @@ class SecActivityBudgetLine(models.Model):
             line.exec_concurrente = values.get("concurrente", 0.0)
             line.exec_total = values.get("total", 0.0)
 
-    @api.depends("exec_total", "amount_total")
+    @api.depends(
+        "exec_total",
+        "amount_total",
+        "activity_id.transfer_ids.state",
+        "activity_id.transfer_ids.line_from_id",
+        "activity_id.transfer_ids.line_to_id",
+    )
     def _compute_traffic_light(self):
+        lines_with_transfer = set()
+        line_ids = [line.id for line in self if line.id]
+        if line_ids:
+            Transfer = self.env["sec.budget.transfer"]
+            transfers = Transfer.search(
+                [
+                    ("state", "=", "confirmed"),
+                    "|",
+                    ("line_from_id", "in", line_ids),
+                    ("line_to_id", "in", line_ids),
+                ]
+            )
+            lines_with_transfer.update(transfers.mapped("line_from_id").ids)
+            lines_with_transfer.update(transfers.mapped("line_to_id").ids)
+
         for line in self:
-            if line.exec_total > line.amount_total:
-                line.traffic_light = "orange"
+            if line.id in lines_with_transfer:
+                line.traffic_light = "orange_transfer"
+                line.traffic_light_color = "orange"
+            elif line.exec_total > line.amount_total:
+                line.traffic_light = "orange_over"
+                line.traffic_light_color = "orange"
             else:
                 line.traffic_light = "green"
+                line.traffic_light_color = "green"
 
     @api.onchange("amount_total")
     def _onchange_amount_total(self):
