@@ -225,3 +225,35 @@ class SecBudgetTransfer(models.Model):
             )
             transfer.message_post(body="<p>%s</p>" % body, subtype_xmlid="mail.mt_note")
         return True
+
+    def unlink(self):
+        for transfer in self:
+            if transfer.state != "confirmed":
+                continue
+
+            amount_programa = transfer.amount_programa or 0.0
+            amount_concurrente = transfer.amount_concurrente or 0.0
+
+            transfer.line_from_id._apply_transfer_delta(
+                amount_programa,
+                amount_concurrente,
+                transfer,
+                direction="in",
+            )
+
+            transfer.line_to_id._apply_transfer_delta(
+                -amount_programa,
+                -amount_concurrente,
+                transfer,
+                direction="out",
+            )
+
+            transfer.message_post(
+                body="<p>%s</p>" %
+                _(
+                    "Se revirtieron los montos de la transferencia al eliminar el registro."
+                ),
+                subtype_xmlid="mail.mt_note",
+            )
+
+        return super().unlink()
