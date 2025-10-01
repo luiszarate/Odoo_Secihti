@@ -30,6 +30,7 @@ class SecRubro(models.Model):
                     _("No se puede eliminar un rubro que está en uso. Puede archivarlo en su lugar."))
         return super(SecRubro, self).unlink()
 
+    @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):
         args = list(args or [])
         activity_id = (
