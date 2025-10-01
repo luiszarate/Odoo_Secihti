@@ -30,6 +30,61 @@ class SecRubro(models.Model):
                     _("No se puede eliminar un rubro que está en uso. Puede archivarlo en su lugar."))
         return super(SecRubro, self).unlink()
 
+    def name_search(self, name="", args=None, operator="ilike", limit=100):
+        args = list(args or [])
+        activity_id = (
+            self.env.context.get("sec_activity_id")
+            or self.env.context.get("default_sec_activity_id")
+        )
+
+        if not activity_id:
+            return super().name_search(name, args, operator=operator, limit=limit)
+
+        # Rubros vinculados a la actividad a través de líneas presupuestales.
+        BudgetLine = self.env["sec.activity.budget.line"]
+        rubro_ids = BudgetLine.search(
+            [("activity_id", "=", activity_id)]
+        ).mapped("rubro_id").ids
+
+        if not rubro_ids:
+            return super().name_search(name, args, operator=operator, limit=limit)
+
+        # 1) Prioriza los rubros relacionados a la actividad.
+        prioritized = super().name_search(
+            name,
+            args + [("id", "in", rubro_ids)],
+            operator=operator,
+            limit=limit or False,
+        )
+
+        # Si el límite es estricto y ya está cubierto con los rubros priorizados, retorna.
+        if limit and len(prioritized) >= limit:
+            return prioritized[:limit]
+
+        taken_ids = {rubro_id for rubro_id, _dummy in prioritized}
+
+        # 2) Agrega el resto de rubros disponibles respetando el límite.
+        remaining_limit = False
+        if limit:
+            remaining_limit = max(limit - len(prioritized), 0)
+            if remaining_limit == 0:
+                return prioritized
+
+        other_args = list(args)
+        if taken_ids:
+            other_args.append(("id", "not in", list(taken_ids)))
+
+        others = super().name_search(
+            name,
+            other_args,
+            operator=operator,
+            limit=remaining_limit,
+        )
+
+        # Evita duplicados y conserva el orden: primero asociados, luego el resto.
+        other_filtered = [res for res in others if res[0] not in taken_ids]
+        return prioritized + other_filtered
+
 
 class SecProject(models.Model):
     _name = "sec.project"

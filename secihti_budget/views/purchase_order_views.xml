@@ -49,6 +49,7 @@
           <field name="sec_activity_id" domain="[('stage_id', '=', sec_stage_id)]"
                  attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
           <field name="sec_rubro_id"
+                 context="{'sec_activity_id': sec_activity_id}"
                  attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
           <field name="sec_total_mxn_manual"
                  attrs="{'invisible': [('sec_project_id', '=', False)]}"/>
