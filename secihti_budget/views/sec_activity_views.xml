@@ -64,6 +64,47 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Transferencias">
+                            <field name="transfer_ids" context="{'default_activity_id': active_id}">
+                                <tree string="Transferencias" create="true" delete="false">
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="line_from_id"/>
+                                    <field name="line_to_id"/>
+                                    <field name="amount"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                                <form string="Transferencia">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="name" readonly="1"/>
+                                                <field name="date"/>
+                                                <field name="activity_id" readonly="1"/>
+                                                <field name="project_id" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="line_from_id" domain="[('activity_id', '=', activity_id)]"/>
+                                                <field name="line_to_id" domain="[('activity_id', '=', activity_id)]"/>
+                                            </group>
+                                            <group>
+                                                <field name="amount_programa"/>
+                                                <field name="amount_concurrente"/>
+                                                <field name="amount" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="justification"/>
+                                        </group>
+                                        <footer>
+                                            <button name="action_confirm" string="Confirmar" type="object" class="btn-primary" states="draft"/>
+                                            <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                                            <field name="state" widget="statusbar" statusbar_visible="draft,confirmed"/>
+                                        </footer>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                         <page string="Órdenes de compra">
                             <field name="purchase_order_ids" readonly="1">
                                 <tree>

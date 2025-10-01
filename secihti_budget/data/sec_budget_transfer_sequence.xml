@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_sec_budget_transfer" model="ir.sequence">
+        <field name="name">Transferencias presupuesto SECIHTI</field>
+        <field name="code">sec.budget.transfer</field>
+        <field name="prefix">TRF%(y)s-</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>
