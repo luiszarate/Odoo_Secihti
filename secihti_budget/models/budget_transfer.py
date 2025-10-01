@@ -29,14 +29,14 @@ class SecBudgetTransfer(models.Model):
         string="Línea origen",
         required=True,
         tracking=True,
-        domain="[('activity_id', '=', activity_id)]",
+        domain="[('stage_id', '=', stage_id)]",
     )
     line_to_id = fields.Many2one(
         "sec.activity.budget.line",
         string="Línea destino",
         required=True,
         tracking=True,
-        domain="[('activity_id', '=', activity_id)]",
+        domain="[('stage_id', '=', stage_id)]",
     )
     amount_programa = fields.Monetary(
         string="Monto programa",
@@ -73,15 +73,29 @@ class SecBudgetTransfer(models.Model):
             self.activity_id = self.line_from_id.activity_id
             self._onchange_amount()
 
-    @api.constrains("line_from_id", "line_to_id", "activity_id")
+    @api.constrains("line_from_id", "line_to_id", "stage_id")
     def _check_activity_consistency(self):
         for transfer in self:
             if not transfer.line_from_id or not transfer.line_to_id or not transfer.activity_id:
                 continue
-            if transfer.line_from_id.activity_id != transfer.activity_id or transfer.line_to_id.activity_id != transfer.activity_id:
+            stage = (
+                transfer.stage_id
+                or transfer.line_from_id.stage_id
+                or transfer.line_to_id.stage_id
+            )
+            if transfer.line_from_id.stage_id != transfer.line_to_id.stage_id:
                 raise ValidationError(
                     _(
-                        "Las líneas seleccionadas deben pertenecer a la actividad indicada en la transferencia."
+                        "Las líneas seleccionadas deben pertenecer a la misma etapa."
+                    )
+                )
+            if stage and (
+                transfer.line_from_id.stage_id != stage
+                or transfer.line_to_id.stage_id != stage
+            ):
+                raise ValidationError(
+                    _(
+                        "Las líneas seleccionadas deben pertenecer a la etapa indicada en la transferencia."
                     )
                 )
 
@@ -134,10 +148,24 @@ class SecBudgetTransfer(models.Model):
                 raise ValidationError(
                     _("La línea de origen y destino no pueden ser la misma.")
                 )
-            if transfer.line_from_id.activity_id != transfer.activity_id or transfer.line_to_id.activity_id != transfer.activity_id:
+            stage = (
+                transfer.stage_id
+                or transfer.line_from_id.stage_id
+                or transfer.line_to_id.stage_id
+            )
+            if transfer.line_from_id.stage_id != transfer.line_to_id.stage_id:
                 raise ValidationError(
                     _(
-                        "Las líneas seleccionadas deben pertenecer a la misma actividad que la transferencia."
+                        "Las líneas seleccionadas deben pertenecer a la misma etapa."
+                    )
+                )
+            if stage and (
+                transfer.line_from_id.stage_id != stage
+                or transfer.line_to_id.stage_id != stage
+            ):
+                raise ValidationError(
+                    _(
+                        "Las líneas seleccionadas deben pertenecer a la misma etapa que la transferencia."
                     )
                 )
 
