@@ -57,11 +57,13 @@ class SecRubro(models.Model):
             operator=operator,
             limit=limit or False,
         )
-
+        
         # Si el límite es estricto y ya está cubierto con los rubros priorizados, retorna.
         if limit and len(prioritized) >= limit:
             return prioritized[:limit]
-
+        else:
+            return prioritized
+        """
         taken_ids = {rubro_id for rubro_id, _dummy in prioritized}
 
         # 2) Agrega el resto de rubros disponibles respetando el límite.
@@ -84,7 +86,7 @@ class SecRubro(models.Model):
 
         # Evita duplicados y conserva el orden: primero asociados, luego el resto.
         other_filtered = [res for res in others if res[0] not in taken_ids]
-        return prioritized + other_filtered
+        return prioritized + other_filtered"""
 
 
 class SecProject(models.Model):
