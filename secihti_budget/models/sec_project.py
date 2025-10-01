@@ -585,6 +585,13 @@ class SecActivityBudgetLine(models.Model):
         "sec.budget.transfer", "line_from_id", string="Transferencias salientes"
     )
 
+    def name_get(self):
+        result = []
+        for line in self:
+            name = line.name or line.rubro_id.display_name or _("Sin descripción")
+            result.append((line.id, name))
+        return result
+
     @api.depends("amount_programa", "amount_concurrente")
     def _compute_total(self):
         for line in self:
