@@ -51,6 +51,7 @@ class SecBudgetTransfer(models.Model):
     amount = fields.Monetary(
         string="Total",
         compute="_compute_amount",
+        inverse="_inverse_amount",
         store=True,
         currency_field="currency_id",
         tracking=True,
@@ -70,6 +71,7 @@ class SecBudgetTransfer(models.Model):
     def _onchange_line_from(self):
         if self.line_from_id:
             self.activity_id = self.line_from_id.activity_id
+            self._onchange_amount()
 
     @api.constrains("line_from_id", "line_to_id", "activity_id")
     def _check_activity_consistency(self):
@@ -89,6 +91,33 @@ class SecBudgetTransfer(models.Model):
             transfer.amount = (transfer.amount_programa or 0.0) + (
                 transfer.amount_concurrente or 0.0
             )
+
+    def _inverse_amount(self):
+        for transfer in self:
+            activity = transfer.activity_id
+            if not activity:
+                activity = transfer.line_from_id.activity_id or transfer.line_to_id.activity_id
+            project = activity.project_id if activity else False
+            if not project:
+                continue
+
+            total = transfer.amount or 0.0
+            transfer.amount_programa = total * (project.pct_programa / 100.0)
+            transfer.amount_concurrente = total * (project.pct_concurrente / 100.0)
+
+    @api.onchange("amount")
+    def _onchange_amount(self):
+        for transfer in self:
+            activity = transfer.activity_id
+            if not activity:
+                activity = transfer.line_from_id.activity_id or transfer.line_to_id.activity_id
+            project = activity.project_id if activity else False
+            if not project:
+                continue
+
+            total = transfer.amount or 0.0
+            transfer.amount_programa = total * (project.pct_programa / 100.0)
+            transfer.amount_concurrente = total * (project.pct_concurrente / 100.0)
 
     def _get_precision(self):
         self.ensure_one()
@@ -136,6 +165,32 @@ class SecBudgetTransfer(models.Model):
                 self.env["ir.sequence"].next_by_code("sec.budget.transfer")
                 or default_name
             )
+
+        if vals.get("amount") and not vals.get("amount_programa") and not vals.get(
+            "amount_concurrente"
+        ):
+            activity = False
+            if vals.get("activity_id"):
+                activity = self.env["sec.activity"].browse(vals["activity_id"])
+            elif vals.get("line_from_id"):
+                activity = (
+                    self.env["sec.activity.budget.line"]
+                    .browse(vals["line_from_id"])
+                    .activity_id
+                )
+            elif vals.get("line_to_id"):
+                activity = (
+                    self.env["sec.activity.budget.line"]
+                    .browse(vals["line_to_id"])
+                    .activity_id
+                )
+            project = activity.project_id if activity else False
+            if project:
+                total = vals.get("amount") or 0.0
+                vals["amount_programa"] = total * (project.pct_programa / 100.0)
+                vals["amount_concurrente"] = total * (project.pct_concurrente / 100.0)
+                if not vals.get("activity_id") and activity:
+                    vals["activity_id"] = activity.id
         record = super().create(vals)
         if record.state == "confirmed":
             record.action_confirm()

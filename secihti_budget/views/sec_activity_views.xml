@@ -51,7 +51,7 @@
                     <notebook>
                         <page string="Presupuesto por rubro">
                             <field name="budget_line_ids">
-                                <tree editable="bottom" decoration-danger="traffic_light == 'orange'">
+                                <tree editable="bottom" decoration-danger="traffic_light_color == 'orange'">
                                     <field name="name"/>
                                     <field name="rubro_id"/>
                                     <field name="tipo_gasto" readonly="1"/>
@@ -59,7 +59,8 @@
                                     <field name="amount_concurrente"/>
                                     <field name="amount_total"/>
                                     <field name="exec_total" readonly="1"/>
-                                    <field name="traffic_light"/>
+                                    <field name="traffic_light_color" invisible="1"/>
+                                    <field name="traffic_light" widget="badge" options="{'class_field': 'traffic_light_color'}"/>
                                     <field name="justification"/>
                                 </tree>
                             </field>
@@ -90,7 +91,7 @@
                                             <group>
                                                 <field name="amount_programa"/>
                                                 <field name="amount_concurrente"/>
-                                                <field name="amount" readonly="1"/>
+                                                <field name="amount"/>
                                             </group>
                                         </group>
                                         <group>
