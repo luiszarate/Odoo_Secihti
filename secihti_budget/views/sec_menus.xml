@@ -5,6 +5,7 @@
     <menuitem id="menu_sec_projects" name="Proyectos" parent="menu_sec_root" action="action_sec_project" sequence="10" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_stages" name="Etapas" parent="menu_sec_root" action="action_sec_stage" sequence="20" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_activities" name="Actividades" parent="menu_sec_root" action="action_sec_activity" sequence="30" groups="secihti_budget.group_sec_admin"/>
+    <menuitem id="menu_sec_transfers" name="Transferencias" parent="menu_sec_root" action="action_sec_budget_transfer" sequence="35" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_rubros" name="Rubros" parent="menu_sec_root" action="action_sec_rubro" sequence="40" groups="secihti_budget.group_sec_admin"/>
 
     <menuitem id="menu_sec_reports" name="Reportes" parent="menu_sec_root" sequence="50" groups="secihti_budget.group_sec_admin"/>
