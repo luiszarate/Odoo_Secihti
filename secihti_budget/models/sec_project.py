@@ -450,7 +450,14 @@ class SecActivity(models.Model):
 
     budget_line_ids = fields.One2many("sec.activity.budget.line", "activity_id")
     transfer_ids = fields.One2many(
-        "sec.budget.transfer", "activity_id", string="Transferencias"
+        "sec.budget.transfer",
+        "activity_from_id",
+        string="Transferencias salientes",
+    )
+    transfer_in_ids = fields.One2many(
+        "sec.budget.transfer",
+        "activity_to_id",
+        string="Transferencias entrantes",
     )
 
     amount_programa = fields.Monetary(
@@ -641,6 +648,9 @@ class SecActivityBudgetLine(models.Model):
         "activity_id.transfer_ids.state",
         "activity_id.transfer_ids.line_from_id",
         "activity_id.transfer_ids.line_to_id",
+        "activity_id.transfer_in_ids.state",
+        "activity_id.transfer_in_ids.line_from_id",
+        "activity_id.transfer_in_ids.line_to_id",
     )
     def _compute_traffic_light(self):
         lines_with_transfer = set()
