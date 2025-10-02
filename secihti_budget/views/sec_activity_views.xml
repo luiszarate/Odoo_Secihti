@@ -51,7 +51,7 @@
                     <notebook>
                         <page string="Presupuesto por rubro">
                             <field name="budget_line_ids">
-                                <tree editable="bottom" decoration-danger="traffic_light_color == 'orange'">
+                                <tree editable="bottom" decoration-danger="traffic_light_color == 'orange'" decoration-warning="traffic_light_color == 'yellow'">
                                     <field name="name"/>
                                     <field name="rubro_id"/>
                                     <field name="tipo_gasto" readonly="1"/>

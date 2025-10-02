@@ -589,7 +589,11 @@ class SecActivityBudgetLine(models.Model):
         store=True,
     )
     traffic_light_color = fields.Selection(
-        [("green", "Verde"), ("orange", "Naranja")],
+        [
+            ("green", "Verde"),
+            ("yellow", "Amarillo"),
+            ("orange", "Naranja"),
+        ],
         compute="_compute_traffic_light",
         store=True,
     )
@@ -671,7 +675,7 @@ class SecActivityBudgetLine(models.Model):
         for line in self:
             if line.id in lines_with_transfer:
                 line.traffic_light = "orange_transfer"
-                line.traffic_light_color = "orange"
+                line.traffic_light_color = "yellow"
             elif line.exec_total > line.amount_total:
                 line.traffic_light = "orange_over"
                 line.traffic_light_color = "orange"
