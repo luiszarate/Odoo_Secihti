@@ -300,6 +300,60 @@ class SecBudgetTransfer(models.Model):
             record.action_confirm()
         return record
 
+    def write(self, vals):
+        tracked_fields = {
+            "amount_programa",
+            "amount_concurrente",
+            "amount",
+            "line_from_id",
+            "line_to_id",
+        }
+
+        confirmed_to_update = self.filtered(lambda t: t.state == "confirmed")
+        should_update_budget = bool(tracked_fields & set(vals.keys()))
+
+        if confirmed_to_update and should_update_budget:
+            updated_transfers = set()
+            for transfer in confirmed_to_update:
+                updated_transfers.add(transfer.id)
+                transfer.line_from_id._apply_transfer_delta(
+                    transfer.amount_programa or 0.0,
+                    transfer.amount_concurrente or 0.0,
+                    transfer,
+                    direction="in",
+                )
+                transfer.line_to_id._apply_transfer_delta(
+                    -1 * (transfer.amount_programa or 0.0),
+                    -1 * (transfer.amount_concurrente or 0.0),
+                    transfer,
+                    direction="out",
+                )
+        else:
+            updated_transfers = set()
+
+        res = super().write(vals)
+
+        if updated_transfers:
+            for transfer in self.filtered(lambda t: t.id in updated_transfers):
+                if transfer.state != "confirmed":
+                    continue
+
+                transfer._validate_lines()
+                transfer._validate_amounts()
+
+                transfer.line_from_id.apply_transfer_out(
+                    transfer.amount_programa or 0.0,
+                    transfer.amount_concurrente or 0.0,
+                    transfer,
+                )
+                transfer.line_to_id.apply_transfer_in(
+                    transfer.amount_programa or 0.0,
+                    transfer.amount_concurrente or 0.0,
+                    transfer,
+                )
+
+        return res
+
     def action_confirm(self):
         for transfer in self:
             if transfer.state == "confirmed":
