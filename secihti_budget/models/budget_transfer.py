@@ -313,6 +313,14 @@ class SecBudgetTransfer(models.Model):
         should_update_budget = bool(tracked_fields & set(vals.keys()))
 
         if confirmed_to_update and should_update_budget:
+            blocked_amount_fields = {"amount", "amount_programa", "amount_concurrente"}
+            if blocked_amount_fields & set(vals.keys()):
+                raise ValidationError(
+                    _(
+                        "No es posible modificar los montos de una transferencia confirmada."
+                        " Solo puede actualizar la justificación."
+                    )
+                )
             updated_transfers = set()
             for transfer in confirmed_to_update:
                 updated_transfers.add(transfer.id)

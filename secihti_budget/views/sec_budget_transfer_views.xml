@@ -42,13 +42,13 @@
                             <field name="line_to_id" domain="[('activity_id', '=', activity_to_id)]"/>
                         </group>
                         <group>
-                            <field name="amount"/>
+                            <field name="amount" attrs="{'readonly': [('state', '=', 'confirmed')]}"/>
                             <field name="amount_programa" readonly="1"/>
                             <field name="amount_concurrente" readonly="1"/>
                         </group>
                     </group>
                     <group>
-                        <field name="justification" attrs="{'readonly': [('state', '=', 'confirmed')]}"/>
+                        <field name="justification"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
