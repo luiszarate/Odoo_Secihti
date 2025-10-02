@@ -14,29 +14,45 @@ class SecBudgetTransfer(models.Model):
     name = fields.Char(
         string="Referencia", default=lambda self: _("Nuevo"), copy=False, tracking=True
     )
-    activity_id = fields.Many2one(
-        "sec.activity", required=True, tracking=True, ondelete="cascade"
+    stage_id = fields.Many2one(
+        "sec.stage", required=True, tracking=True, ondelete="cascade"
     )
     project_id = fields.Many2one(
-        related="activity_id.project_id", store=True, readonly=True
+        related="stage_id.project_id", store=True, readonly=True
     )
-    stage_id = fields.Many2one(related="activity_id.stage_id", store=True, readonly=True)
     currency_id = fields.Many2one(
-        related="activity_id.currency_id", store=True, readonly=True
+        related="project_id.currency_id", store=True, readonly=True
+    )
+    activity_from_id = fields.Many2one(
+        "sec.activity",
+        string="Actividad origen",
+        required=True,
+        tracking=True,
+        ondelete="cascade",
+        domain="[('stage_id', '=', stage_id)]",
+        oldname="activity_id",
+    )
+    activity_to_id = fields.Many2one(
+        "sec.activity",
+        string="Actividad destino",
+        required=True,
+        tracking=True,
+        domain="[('stage_id', '=', stage_id)]",
+        ondelete="cascade",
     )
     line_from_id = fields.Many2one(
         "sec.activity.budget.line",
         string="Línea origen",
         required=True,
         tracking=True,
-        domain="[('activity_id', '=', activity_id)]",
+        domain="[('activity_id', '=', activity_from_id)]",
     )
     line_to_id = fields.Many2one(
         "sec.activity.budget.line",
         string="Línea destino",
         required=True,
         tracking=True,
-        domain="[('activity_id', '=', activity_id)]",
+        domain="[('activity_id', '=', activity_to_id)]",
     )
     amount_programa = fields.Monetary(
         string="Monto programa",
@@ -67,22 +83,80 @@ class SecBudgetTransfer(models.Model):
         tracking=True,
     )
 
+    @api.onchange("stage_id")
+    def _onchange_stage(self):
+        for transfer in self:
+            if transfer.activity_from_id and transfer.activity_from_id.stage_id != transfer.stage_id:
+                transfer.activity_from_id = False
+                transfer.line_from_id = False
+            if transfer.activity_to_id and transfer.activity_to_id.stage_id != transfer.stage_id:
+                transfer.activity_to_id = False
+                transfer.line_to_id = False
+
     @api.onchange("line_from_id")
     def _onchange_line_from(self):
-        if self.line_from_id:
-            self.activity_id = self.line_from_id.activity_id
-            self._onchange_amount()
+        for transfer in self:
+            if transfer.line_from_id:
+                transfer.activity_from_id = transfer.line_from_id.activity_id
+                transfer.stage_id = transfer.line_from_id.stage_id
+                transfer._onchange_amount()
 
-    @api.constrains("line_from_id", "line_to_id", "activity_id")
+    @api.onchange("line_to_id")
+    def _onchange_line_to(self):
+        for transfer in self:
+            if transfer.line_to_id:
+                transfer.activity_to_id = transfer.line_to_id.activity_id
+                transfer.stage_id = transfer.line_to_id.stage_id
+                transfer._onchange_amount()
+
+    @api.onchange("activity_from_id")
+    def _onchange_activity_from(self):
+        for transfer in self:
+            if transfer.activity_from_id:
+                transfer.stage_id = transfer.activity_from_id.stage_id
+
+    @api.onchange("activity_to_id")
+    def _onchange_activity_to(self):
+        for transfer in self:
+            if transfer.activity_to_id:
+                transfer.stage_id = transfer.activity_to_id.stage_id
+
+    @api.constrains(
+        "stage_id",
+        "activity_from_id",
+        "activity_to_id",
+        "line_from_id",
+        "line_to_id",
+    )
     def _check_activity_consistency(self):
         for transfer in self:
-            if not transfer.line_from_id or not transfer.line_to_id or not transfer.activity_id:
+            if (
+                not transfer.stage_id
+                or not transfer.activity_from_id
+                or not transfer.activity_to_id
+                or not transfer.line_from_id
+                or not transfer.line_to_id
+            ):
                 continue
-            if transfer.line_from_id.activity_id != transfer.activity_id or transfer.line_to_id.activity_id != transfer.activity_id:
+            if transfer.activity_from_id.stage_id != transfer.stage_id:
                 raise ValidationError(
-                    _(
-                        "Las líneas seleccionadas deben pertenecer a la actividad indicada en la transferencia."
-                    )
+                    _("La actividad de origen debe pertenecer a la etapa indicada."),
+                )
+            if transfer.activity_to_id.stage_id != transfer.stage_id:
+                raise ValidationError(
+                    _("La actividad de destino debe pertenecer a la etapa indicada."),
+                )
+            if transfer.activity_from_id.stage_id != transfer.activity_to_id.stage_id:
+                raise ValidationError(
+                    _("Las actividades de la transferencia deben pertenecer a la misma etapa."),
+                )
+            if transfer.line_from_id.activity_id != transfer.activity_from_id:
+                raise ValidationError(
+                    _("La línea de origen debe pertenecer a la actividad de origen."),
+                )
+            if transfer.line_to_id.activity_id != transfer.activity_to_id:
+                raise ValidationError(
+                    _("La línea de destino debe pertenecer a la actividad de destino."),
                 )
 
     @api.depends("amount_programa", "amount_concurrente")
@@ -94,10 +168,7 @@ class SecBudgetTransfer(models.Model):
 
     def _inverse_amount(self):
         for transfer in self:
-            activity = transfer.activity_id
-            if not activity:
-                activity = transfer.line_from_id.activity_id or transfer.line_to_id.activity_id
-            project = activity.project_id if activity else False
+            project = transfer._get_project()
             if not project:
                 continue
 
@@ -108,10 +179,7 @@ class SecBudgetTransfer(models.Model):
     @api.onchange("amount")
     def _onchange_amount(self):
         for transfer in self:
-            activity = transfer.activity_id
-            if not activity:
-                activity = transfer.line_from_id.activity_id or transfer.line_to_id.activity_id
-            project = activity.project_id if activity else False
+            project = transfer._get_project()
             if not project:
                 continue
 
@@ -124,6 +192,20 @@ class SecBudgetTransfer(models.Model):
         currency = self.currency_id or self.env.company.currency_id
         return currency.rounding or self.env.company.currency_id.rounding
 
+    def _get_project(self):
+        self.ensure_one()
+        if self.project_id:
+            return self.project_id
+        if self.stage_id:
+            return self.stage_id.project_id
+        activities = self.activity_from_id | self.activity_to_id
+        if activities:
+            return activities[0].project_id
+        lines = self.line_from_id | self.line_to_id
+        if lines:
+            return lines[0].project_id
+        return False
+
     def _validate_lines(self):
         for transfer in self:
             if not transfer.line_from_id or not transfer.line_to_id:
@@ -134,11 +216,24 @@ class SecBudgetTransfer(models.Model):
                 raise ValidationError(
                     _("La línea de origen y destino no pueden ser la misma.")
                 )
-            if transfer.line_from_id.activity_id != transfer.activity_id or transfer.line_to_id.activity_id != transfer.activity_id:
+            if (
+                transfer.line_from_id.activity_id != transfer.activity_from_id
+                or transfer.line_to_id.activity_id != transfer.activity_to_id
+            ):
                 raise ValidationError(
-                    _(
-                        "Las líneas seleccionadas deben pertenecer a la misma actividad que la transferencia."
-                    )
+                    _("Las líneas seleccionadas deben pertenecer a las actividades indicadas."),
+                )
+            if transfer.activity_from_id.stage_id != transfer.activity_to_id.stage_id:
+                raise ValidationError(
+                    _("No es posible transferir entre actividades de diferentes etapas."),
+                )
+            if transfer.activity_from_id.stage_id != transfer.stage_id:
+                raise ValidationError(
+                    _("La etapa seleccionada debe coincidir con la etapa de la actividad de origen."),
+                )
+            if transfer.activity_to_id.stage_id != transfer.stage_id:
+                raise ValidationError(
+                    _("La etapa seleccionada debe coincidir con la etapa de la actividad de destino."),
                 )
 
     def _validate_amounts(self):
@@ -169,28 +264,37 @@ class SecBudgetTransfer(models.Model):
         if vals.get("amount") and not vals.get("amount_programa") and not vals.get(
             "amount_concurrente"
         ):
+            project = False
+            stage = False
             activity = False
-            if vals.get("activity_id"):
-                activity = self.env["sec.activity"].browse(vals["activity_id"])
+            if vals.get("stage_id"):
+                stage = self.env["sec.stage"].browse(vals["stage_id"])
+            elif vals.get("activity_from_id"):
+                activity = self.env["sec.activity"].browse(vals["activity_from_id"])
+                stage = activity.stage_id
             elif vals.get("line_from_id"):
-                activity = (
-                    self.env["sec.activity.budget.line"]
-                    .browse(vals["line_from_id"])
-                    .activity_id
-                )
+                line = self.env["sec.activity.budget.line"].browse(vals["line_from_id"])
+                activity = line.activity_id
+                stage = line.stage_id
+                vals.setdefault("activity_from_id", activity.id)
             elif vals.get("line_to_id"):
-                activity = (
-                    self.env["sec.activity.budget.line"]
-                    .browse(vals["line_to_id"])
-                    .activity_id
-                )
-            project = activity.project_id if activity else False
+                line = self.env["sec.activity.budget.line"].browse(vals["line_to_id"])
+                activity = line.activity_id
+                stage = line.stage_id
+                vals.setdefault("activity_to_id", activity.id)
+            if vals.get("activity_to_id") and not stage:
+                activity = self.env["sec.activity"].browse(vals["activity_to_id"])
+                stage = activity.stage_id
+            if stage and not vals.get("stage_id"):
+                vals["stage_id"] = stage.id
+            if stage:
+                project = stage.project_id
+            elif activity:
+                project = activity.project_id
             if project:
                 total = vals.get("amount") or 0.0
                 vals["amount_programa"] = total * (project.pct_programa / 100.0)
                 vals["amount_concurrente"] = total * (project.pct_concurrente / 100.0)
-                if not vals.get("activity_id") and activity:
-                    vals["activity_id"] = activity.id
         record = super().create(vals)
         if record.state == "confirmed":
             record.action_confirm()

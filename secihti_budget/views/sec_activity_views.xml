@@ -66,10 +66,13 @@
                             </field>
                         </page>
                         <page string="Transferencias">
-                            <field name="transfer_ids" context="{'default_activity_id': active_id}">
+                            <field name="transfer_ids" context="{'default_activity_from_id': active_id, 'default_stage_id': stage_id}">
                                 <tree string="Transferencias" create="true" delete="false">
                                     <field name="name"/>
                                     <field name="date"/>
+                                    <field name="stage_id"/>
+                                    <field name="activity_from_id"/>
+                                    <field name="activity_to_id"/>
                                     <field name="line_from_id"/>
                                     <field name="line_to_id"/>
                                     <field name="amount"/>
@@ -81,12 +84,14 @@
                                             <group>
                                                 <field name="name" readonly="1"/>
                                                 <field name="date"/>
-                                                <field name="activity_id" readonly="1"/>
+                                                <field name="stage_id"/>
+                                                <field name="activity_from_id" readonly="1"/>
+                                                <field name="activity_to_id"/>
                                                 <field name="project_id" readonly="1"/>
                                             </group>
                                             <group>
-                                                <field name="line_from_id" domain="[('activity_id', '=', activity_id)]"/>
-                                                <field name="line_to_id" domain="[('activity_id', '=', activity_id)]"/>
+                                                <field name="line_from_id" domain="[('activity_id', '=', activity_from_id)]"/>
+                                                <field name="line_to_id" domain="[('activity_id', '=', activity_to_id)]"/>
                                             </group>
                                             <group>
                                                 <field name="amount_programa"/>
