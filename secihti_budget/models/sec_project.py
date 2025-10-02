@@ -4,7 +4,8 @@ from collections import defaultdict
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-from odoo.tools import float_is_zero
+from odoo.tools import float_is_zero, float_compare
+from odoo.tools.misc import formatLang
 
 _logger = logging.getLogger(__name__)
 
@@ -448,6 +449,16 @@ class SecActivity(models.Model):
     justif_general = fields.Text(string="Justificación general")
 
     budget_line_ids = fields.One2many("sec.activity.budget.line", "activity_id")
+    transfer_ids = fields.One2many(
+        "sec.budget.transfer",
+        "activity_from_id",
+        string="Transferencias salientes",
+    )
+    transfer_in_ids = fields.One2many(
+        "sec.budget.transfer",
+        "activity_to_id",
+        string="Transferencias entrantes",
+    )
 
     amount_programa = fields.Monetary(
         compute="_compute_budget_totals",
@@ -571,12 +582,23 @@ class SecActivityBudgetLine(models.Model):
     traffic_light = fields.Selection(
         [
             ("green", "Dentro del presupuesto"),
-            ("orange", "Sobreejercido"),
+            ("orange_over", "Sobreejercido"),
+            ("orange_transfer", "Con transferencia entre rubros"),
+        ],
+        compute="_compute_traffic_light",
+        store=True,
+    )
+    traffic_light_color = fields.Selection(
+        [
+            ("green", "Verde"),
+            ("yellow", "Amarillo"),
+            ("orange", "Naranja"),
         ],
         compute="_compute_traffic_light",
         store=True,
     )
     justification = fields.Text(string="Justificación específica")
+<<<<<<< HEAD
 """
     def name_get(self):
         result = []
@@ -592,6 +614,19 @@ class SecActivityBudgetLine(models.Model):
             result.append((line.id, display_name))
         return result
 """
+=======
+    transfer_ids = fields.One2many(
+        "sec.budget.transfer", "line_from_id", string="Transferencias salientes"
+    )
+
+    def name_get(self):
+        result = []
+        for line in self:
+            name = line.name or line.rubro_id.display_name or _("Sin descripción")
+            result.append((line.id, name))
+        return result
+
+>>>>>>> rubros_transfer_dev
     @api.depends("amount_programa", "amount_concurrente")
     def _compute_total(self):
         for line in self:
@@ -629,13 +664,42 @@ class SecActivityBudgetLine(models.Model):
             line.exec_concurrente = values.get("concurrente", 0.0)
             line.exec_total = values.get("total", 0.0)
 
-    @api.depends("exec_total", "amount_total")
+    @api.depends(
+        "exec_total",
+        "amount_total",
+        "activity_id.transfer_ids.state",
+        "activity_id.transfer_ids.line_from_id",
+        "activity_id.transfer_ids.line_to_id",
+        "activity_id.transfer_in_ids.state",
+        "activity_id.transfer_in_ids.line_from_id",
+        "activity_id.transfer_in_ids.line_to_id",
+    )
     def _compute_traffic_light(self):
+        lines_with_transfer = set()
+        line_ids = [line.id for line in self if line.id]
+        if line_ids:
+            Transfer = self.env["sec.budget.transfer"]
+            transfers = Transfer.search(
+                [
+                    ("state", "=", "confirmed"),
+                    "|",
+                    ("line_from_id", "in", line_ids),
+                    ("line_to_id", "in", line_ids),
+                ]
+            )
+            lines_with_transfer.update(transfers.mapped("line_from_id").ids)
+            lines_with_transfer.update(transfers.mapped("line_to_id").ids)
+
         for line in self:
-            if line.exec_total > line.amount_total:
-                line.traffic_light = "orange"
+            if line.id in lines_with_transfer:
+                line.traffic_light = "orange_transfer"
+                line.traffic_light_color = "yellow"
+            elif line.exec_total > line.amount_total:
+                line.traffic_light = "orange_over"
+                line.traffic_light_color = "orange"
             else:
                 line.traffic_light = "green"
+                line.traffic_light_color = "green"
 
     @api.onchange("amount_total")
     def _onchange_amount_total(self):
@@ -649,4 +713,145 @@ class SecActivityBudgetLine(models.Model):
             if not line.amount_programa and not line.amount_concurrente:
                 line.amount_programa = total * (project.pct_programa / 100.0)
                 line.amount_concurrente = total * (project.pct_concurrente / 100.0)
+
+    # ------------------------------------------------------------------
+    # Transfer helpers
+    # ------------------------------------------------------------------
+
+    def _get_currency(self):
+        self.ensure_one()
+        return (
+            self.currency_id
+            or self.activity_id.currency_id
+            or self.project_id.currency_id
+            or self.env.company.currency_id
+        )
+
+    def _format_currency(self, amount):
+        self.ensure_one()
+        return formatLang(self.env, amount or 0.0, currency_obj=self._get_currency())
+
+    def _validate_outgoing_transfer(self, amount_programa, amount_concurrente):
+        self.ensure_one()
+        currency = self._get_currency()
+        precision = currency.rounding
+
+        amount_programa = amount_programa or 0.0
+        amount_concurrente = amount_concurrente or 0.0
+
+        available_programa = (self.amount_programa or 0.0) - (self.exec_programa or 0.0)
+        available_concurrente = (self.amount_concurrente or 0.0) - (
+            self.exec_concurrente or 0.0
+        )
+
+        if float_compare(
+            available_programa, amount_programa, precision_rounding=precision
+        ) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no cuenta con saldo programa suficiente. Disponible: %(available)s. Solicitado: %(requested)s",
+                )
+                % {
+                    "line": self.display_name,
+                    "available": self._format_currency(available_programa),
+                    "requested": self._format_currency(amount_programa),
+                }
+            )
+
+        if float_compare(
+            available_concurrente, amount_concurrente, precision_rounding=precision
+        ) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no cuenta con saldo concurrente suficiente. Disponible: %(available)s. Solicitado: %(requested)s",
+                )
+                % {
+                    "line": self.display_name,
+                    "available": self._format_currency(available_concurrente),
+                    "requested": self._format_currency(amount_concurrente),
+                }
+            )
+
+    def _apply_transfer_delta(self, delta_programa, delta_concurrente, transfer, direction):
+        self.ensure_one()
+        currency = self._get_currency()
+        precision = currency.rounding
+
+        new_programa = (self.amount_programa or 0.0) + (delta_programa or 0.0)
+        new_concurrente = (self.amount_concurrente or 0.0) + (
+            delta_concurrente or 0.0
+        )
+
+        if float_compare(new_programa, 0.0, precision_rounding=precision) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no puede quedar con presupuesto programa negativo tras la transferencia.",
+                )
+                % {"line": self.display_name}
+            )
+        if float_compare(new_concurrente, 0.0, precision_rounding=precision) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no puede quedar con presupuesto concurrente negativo tras la transferencia.",
+                )
+                % {"line": self.display_name}
+            )
+
+        if float_compare(
+            new_programa, self.exec_programa or 0.0, precision_rounding=precision
+        ) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no puede quedar por debajo del monto ejecutado programa tras la transferencia.",
+                )
+                % {"line": self.display_name}
+            )
+        if float_compare(
+            new_concurrente,
+            self.exec_concurrente or 0.0,
+            precision_rounding=precision,
+        ) < 0:
+            raise ValidationError(
+                _(
+                    "La línea %(line)s no puede quedar por debajo del monto ejecutado concurrente tras la transferencia.",
+                )
+                % {"line": self.display_name}
+            )
+
+        self.write(
+            {
+                "amount_programa": new_programa,
+                "amount_concurrente": new_concurrente,
+            }
+        )
+
+        direction_label = _("entrada") if direction == "in" else _("salida")
+        message = _(
+            "Transferencia %(transfer)s (%(direction)s): Programa %(programa)s, Concurrente %(concurrente)s.",
+        ) % {
+            "transfer": transfer.display_name if transfer else _("manual"),
+            "direction": direction_label,
+            "programa": self._format_currency(abs(delta_programa or 0.0)),
+            "concurrente": self._format_currency(abs(delta_concurrente or 0.0)),
+        }
+        self.message_post(body="<p>%s</p>" % message, subtype_xmlid="mail.mt_note")
+
+    def apply_transfer_out(self, amount_programa, amount_concurrente, transfer):
+        self.ensure_one()
+        self._validate_outgoing_transfer(amount_programa, amount_concurrente)
+        self._apply_transfer_delta(
+            -1 * (amount_programa or 0.0),
+            -1 * (amount_concurrente or 0.0),
+            transfer,
+            direction="out",
+        )
+
+    def apply_transfer_in(self, amount_programa, amount_concurrente, transfer):
+        self.ensure_one()
+        self._apply_transfer_delta(
+            amount_programa or 0.0,
+            amount_concurrente or 0.0,
+            transfer,
+            direction="in",
+        )
 

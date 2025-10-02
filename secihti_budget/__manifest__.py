@@ -13,9 +13,11 @@
     ],
     "data": [
         "security/security.xml",
+        "data/sec_budget_transfer_sequence.xml",
         "views/sec_project_views.xml",
         "views/sec_stage_views.xml",
         "views/sec_activity_views.xml",
+        "views/sec_budget_transfer_views.xml",
         "views/sec_rubro_views.xml",
         "views/purchase_order_views.xml",
         "views/import_activity_wizard_views.xml",
