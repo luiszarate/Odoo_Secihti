@@ -42,9 +42,9 @@
                             <field name="line_to_id" domain="[('activity_id', '=', activity_to_id)]"/>
                         </group>
                         <group>
-                            <field name="amount_programa"/>
-                            <field name="amount_concurrente"/>
-                            <field name="amount" readonly="1"/>
+                            <field name="amount"/>
+                            <field name="amount_programa" readonly="1"/>
+                            <field name="amount_concurrente" readonly="1"/>
                         </group>
                     </group>
                     <group>
