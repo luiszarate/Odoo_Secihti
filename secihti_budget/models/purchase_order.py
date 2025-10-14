@@ -208,10 +208,18 @@ class PurchaseOrder(models.Model):
                 continue
 
             taxes = bank_fee_product.supplier_taxes_id
+            description = (
+                bank_fee_product.get_product_multiline_description_purchase()
+                if hasattr(
+                    bank_fee_product, "get_product_multiline_description_purchase"
+                )
+                else bank_fee_product.display_name or bank_fee_product.name
+            )
+
             PurchaseOrderLine.create(
                 {
                     "order_id": order.id,
-                    "name": bank_fee_product.get_product_multiline_description_purchase(),
+                    "name": description,
                     "product_id": bank_fee_product.id,
                     "product_qty": 1.0,
                     "product_uom": (bank_fee_product.uom_po_id or bank_fee_product.uom_id).id,
