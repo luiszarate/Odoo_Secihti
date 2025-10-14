@@ -157,6 +157,69 @@ class PurchaseOrder(models.Model):
                 if (order.sec_total_mxn_manual or 0.0) != (order.amount_total or 0.0):
                     order.write({"sec_total_mxn_manual": order.amount_total})
 
+    def _add_sec_bank_fee_line_if_needed(self):
+        """Agrega una línea de comisión bancaria cuando aplique."""
+        PurchaseOrderLine = self.env["purchase.order.line"]
+        Product = self.env["product.product"]
+
+        transfer_values = set()
+        payment_field = self._fields.get("x_payment_method")
+        if payment_field and getattr(payment_field, "selection", False):
+            transfer_values = {
+                value
+                for value, label in payment_field.selection
+                if (label or "").strip().lower() == "transferencia"
+            }
+
+        for order in self:
+            if not order.sec_project_id:
+                continue
+
+            payment_value = getattr(order, "x_payment_method", False)
+            if transfer_values:
+                if payment_value not in transfer_values:
+                    continue
+            else:
+                if (payment_value or "").strip().lower() != "transferencia":
+                    continue
+
+            bank_fee_product = False
+            try:
+                bank_fee_product = self.env.ref(
+                    "product.product_product_bank_fees", raise_if_not_found=False
+                )
+            except ValueError:
+                bank_fee_product = False
+            if not bank_fee_product:
+                bank_fee_product = Product.search(
+                    [
+                        ("name", "=", "Comisión Bancaria"),
+                        ("purchase_ok", "=", True),
+                    ],
+                    limit=1,
+                )
+            if not bank_fee_product:
+                continue
+
+            existing_line = order.order_line.filtered(
+                lambda line: line.product_id == bank_fee_product
+            )
+            if existing_line:
+                continue
+
+            taxes = bank_fee_product.supplier_taxes_id
+            PurchaseOrderLine.create(
+                {
+                    "order_id": order.id,
+                    "name": bank_fee_product.get_product_multiline_description_purchase(),
+                    "product_id": bank_fee_product.id,
+                    "product_qty": 1.0,
+                    "product_uom": (bank_fee_product.uom_po_id or bank_fee_product.uom_id).id,
+                    "price_unit": 7.5,
+                    "taxes_id": [(6, 0, taxes.ids)],
+                }
+            )
+
     @api.onchange("currency_id", "company_currency_id", "order_line")
     def _onchange_sync_mxn_manual(self):
         """En el formulario: si está en MXN, refleja aquí el total."""
@@ -171,6 +234,7 @@ class PurchaseOrder(models.Model):
         order._ensure_budget_line_for_activity_rubro()
         # Sincroniza manual MXN si aplica
         order._sync_mxn_manual_if_needed()
+        order._add_sec_bank_fee_line_if_needed()
         return order
 
     def write(self, vals):
@@ -183,6 +247,17 @@ class PurchaseOrder(models.Model):
         if any(k in vals for k in ("sec_activity_id", "sec_rubro_id")):
             for order in self:
                 order._ensure_budget_line_for_activity_rubro()
+        if any(
+            k in vals
+            for k in (
+                "sec_project_id",
+                "order_line",
+                "x_payment_method",
+            )
+        ):
+            for order in self:
+                order._add_sec_bank_fee_line_if_needed()
         return res
+
 
     
