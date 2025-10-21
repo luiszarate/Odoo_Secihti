@@ -216,7 +216,7 @@ class PurchaseOrder(models.Model):
                 else bank_fee_product.display_name or bank_fee_product.name
             )
 
-            PurchaseOrderLine.create(
+            new_line = PurchaseOrderLine.create(
                 {
                     "order_id": order.id,
                     "name": description,
@@ -227,6 +227,13 @@ class PurchaseOrder(models.Model):
                     "taxes_id": [(6, 0, taxes.ids)],
                 }
             )
+
+            # Al agregar la comisión bancaria sincroniza el total manual en MXN
+            order_to_update = new_line.order_id or order
+            if order_to_update:
+                amount_total = order_to_update.amount_total or 0.0
+                if (order_to_update.sec_total_mxn_manual or 0.0) != amount_total:
+                    order_to_update.write({"sec_total_mxn_manual": amount_total})
 
     @api.onchange("currency_id", "company_currency_id", "order_line")
     def _onchange_sync_mxn_manual(self):
