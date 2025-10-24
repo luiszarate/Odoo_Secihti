@@ -9,6 +9,10 @@ class PurchaseOrder(models.Model):
     sec_stage_id = fields.Many2one("sec.stage", string="Etapa SECIHTI")
     sec_activity_id = fields.Many2one("sec.activity", string="Actividad SECIHTI")
     sec_rubro_id = fields.Many2one("sec.rubro", string="Rubro SECIHTI")
+    sec_bank_statement_verified = fields.Boolean(
+        string="Gasto verificado en estado de cuenta",
+        help="Indica si el gasto ya fue contrastado contra el estado de cuenta bancario.",
+    )
 
     company_currency_id = fields.Many2one(
         "res.currency",
