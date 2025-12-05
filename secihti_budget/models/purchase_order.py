@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+from odoo.tools import float_round
 
 
 class PurchaseOrder(models.Model):
@@ -25,6 +26,18 @@ class PurchaseOrder(models.Model):
     sec_effective_mxn = fields.Monetary(
         string="Total MXN efectivo",
         compute="_compute_sec_effective_mxn",
+        store=True,
+        currency_field="company_currency_id",
+    )
+    sec_total_mxn_concurrente = fields.Monetary(
+        string="Total MXN concurrente (30%)",
+        compute="_compute_sec_allocations",
+        store=True,
+        currency_field="company_currency_id",
+    )
+    sec_total_mxn_programa = fields.Monetary(
+        string="Total MXN programa (70%)",
+        compute="_compute_sec_allocations",
         store=True,
         currency_field="company_currency_id",
     )
@@ -146,6 +159,15 @@ class PurchaseOrder(models.Model):
                 order.sec_effective_mxn = order.amount_total or 0.0
             else:
                 order.sec_effective_mxn = order.sec_total_mxn_manual or 0.0
+
+    @api.depends("sec_effective_mxn")
+    def _compute_sec_allocations(self):
+        for order in self:
+            total = order.sec_effective_mxn or 0.0
+            concurrente = float_round(total * 0.30, precision_digits=2)
+            programa = float_round(total - concurrente, precision_digits=2)
+            order.sec_total_mxn_concurrente = concurrente
+            order.sec_total_mxn_programa = programa
 
     def _sec_get_amount_mxn(self):
         """Mantén este helper por compatibilidad, pero delega al compute."""
