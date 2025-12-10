@@ -185,81 +185,11 @@ class PurchaseOrder(models.Model):
 
     def _add_sec_bank_fee_line_if_needed(self):
         """Agrega una línea de comisión bancaria cuando aplique."""
-        PurchaseOrderLine = self.env["purchase.order.line"]
-        Product = self.env["product.product"]
-
-        transfer_values = set()
-        payment_field = self._fields.get("x_payment_method")
-        if payment_field and getattr(payment_field, "selection", False):
-            transfer_values = {
-                value
-                for value, label in payment_field.selection
-                if (label or "").strip().lower() == "transferencia"
-            }
-
-        for order in self:
-            if not order.sec_project_id:
-                continue
-
-            payment_value = getattr(order, "x_payment_method", False)
-            if transfer_values:
-                if payment_value not in transfer_values:
-                    continue
-            else:
-                if (payment_value or "").strip().lower() != "transferencia":
-                    continue
-
-            bank_fee_product = False
-            try:
-                bank_fee_product = self.env.ref(
-                    "product.product_product_bank_fees", raise_if_not_found=False
-                )
-            except ValueError:
-                bank_fee_product = False
-            if not bank_fee_product:
-                bank_fee_product = Product.search(
-                    [
-                        ("name", "=", "Comisión Bancaria"),
-                        ("purchase_ok", "=", True),
-                    ],
-                    limit=1,
-                )
-            if not bank_fee_product:
-                continue
-
-            existing_line = order.order_line.filtered(
-                lambda line: line.product_id == bank_fee_product
-            )
-            if existing_line:
-                continue
-
-            taxes = bank_fee_product.supplier_taxes_id
-            description = (
-                bank_fee_product.get_product_multiline_description_purchase()
-                if hasattr(
-                    bank_fee_product, "get_product_multiline_description_purchase"
-                )
-                else bank_fee_product.display_name or bank_fee_product.name
-            )
-
-            new_line = PurchaseOrderLine.create(
-                {
-                    "order_id": order.id,
-                    "name": description,
-                    "product_id": bank_fee_product.id,
-                    "product_qty": 1.0,
-                    "product_uom": (bank_fee_product.uom_po_id or bank_fee_product.uom_id).id,
-                    "price_unit": 7.5,
-                    "taxes_id": [(6, 0, taxes.ids)],
-                }
-            )
-
-            # Al agregar la comisión bancaria sincroniza el total manual en MXN
-            order_to_update = new_line.order_id or order
-            if order_to_update:
-                amount_total = order_to_update.amount_total or 0.0
-                if (order_to_update.sec_total_mxn_manual or 0.0) != amount_total:
-                    order_to_update.write({"sec_total_mxn_manual": amount_total})
+        # Lógica temporalmente deshabilitada: no se agregará la línea de
+        # comisión bancaria al crear o modificar órdenes de compra. Se mantiene
+        # el método para una reactivación futura sin eliminar el código
+        # original.
+        return
 
     @api.onchange("currency_id", "company_currency_id", "order_line")
     def _onchange_sync_mxn_manual(self):
