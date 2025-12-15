@@ -102,7 +102,7 @@ class SecAttachmentExportWizard(models.TransientModel):
 
     def _get_rubro_folder(self, order):
         rubro = order.sec_rubro_id
-        label = rubro.code or rubro.name if rubro else "Sin_rubro"
+        label = rubro.name if rubro else "Sin_rubro"
         return label.replace("/", "-") if label else "Sin_rubro"
 
     def _build_filename(self):
