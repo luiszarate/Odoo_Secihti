@@ -89,10 +89,21 @@ class SecAttachmentExportWizard(models.TransientModel):
                     if not attachment.datas:
                         continue
                     filename = getattr(attachment, "datas_fname", False) or attachment.name or "adjunto"
-                    arcname = "%s/%s" % (order.name, filename)
+                    arcname = self._get_attachment_path(order, filename)
                     zip_file.writestr(arcname, base64.b64decode(attachment.datas))
         buffer.seek(0)
         return buffer
+
+    def _get_attachment_path(self, order, filename):
+        if self.rubro_id:
+            return "%s/%s" % (order.name, filename)
+        rubro_folder = self._get_rubro_folder(order)
+        return "%s/%s/%s" % (rubro_folder, order.name, filename)
+
+    def _get_rubro_folder(self, order):
+        rubro = order.sec_rubro_id
+        label = rubro.code or rubro.name if rubro else "Sin_rubro"
+        return label.replace("/", "-") if label else "Sin_rubro"
 
     def _build_filename(self):
         project_label = self.project_id.code or self.project_id.name or "Proyecto"
