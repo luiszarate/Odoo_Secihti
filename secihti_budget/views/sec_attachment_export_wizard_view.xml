@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_attachment_export_wizard" model="ir.ui.view">
+        <field name="name">sec.attachment.export.wizard.form</field>
+        <field name="model">sec.attachment.export.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Exportar adjuntos" create="false" edit="false">
+                <group>
+                    <field name="project_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="state_filter"/>
+                    <field name="rubro_id"/>
+                    <field name="include_pending"/>
+                </group>
+                <group attrs="{'invisible': [('file_data', '=', False)]}">
+                    <field name="filename" readonly="1"/>
+                    <field name="file_data" filename="filename" readonly="1"/>
+                </group>
+                <footer attrs="{'invisible': [('file_data', '!=', False)]}">
+                    <button string="Descargar" type="object" name="action_export" class="btn-primary"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+                <footer attrs="{'invisible': [('file_data', '=', False)]}">
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sec_attachment_export" model="ir.actions.act_window">
+        <field name="name">Exportar adjuntos SECIHTI</field>
+        <field name="res_model">sec.attachment.export.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sec_attachment_export_wizard"/>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+
+    <menuitem id="menu_sec_attachment_export" name="Exportación de adjuntos" parent="menu_sec_reports" action="action_sec_attachment_export" sequence="20" groups="secihti_budget.group_sec_admin"/>
+</odoo>
