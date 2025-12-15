@@ -76,7 +76,13 @@ class SecAttachmentExportWizard(models.TransientModel):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
             for order in orders:
-                attachments = order.message_attachment_ids
+                attachments = self.env["ir.attachment"].search(
+                    [
+                        ("res_model", "=", "purchase.order"),
+                        ("res_id", "=", order.id),
+                        ("type", "=", "binary"),
+                    ]
+                )
                 if not attachments:
                     continue
                 for attachment in attachments:
