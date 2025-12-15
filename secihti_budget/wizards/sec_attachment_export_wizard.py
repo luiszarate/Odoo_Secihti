@@ -88,7 +88,7 @@ class SecAttachmentExportWizard(models.TransientModel):
                 for attachment in attachments:
                     if not attachment.datas:
                         continue
-                    filename = attachment.datas_fname or attachment.name or "adjunto"
+                    filename = getattr(attachment, "datas_fname", False) or attachment.name or "adjunto"
                     arcname = "%s/%s" % (order.name, filename)
                     zip_file.writestr(arcname, base64.b64decode(attachment.datas))
         buffer.seek(0)
