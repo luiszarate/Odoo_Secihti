@@ -491,7 +491,6 @@ class SecActivity(models.Model):
         store=True,
         currency_field="currency_id",
     )
-
     traffic_light = fields.Selection(
         [
             ("green", "Dentro del presupuesto"),
@@ -578,6 +577,19 @@ class SecActivityBudgetLine(models.Model):
         store=True,
         currency_field="currency_id",
     )
+    rem_total = fields.Monetary(
+        compute="_compute_remaining",
+        store=True,
+        currency_field="currency_id",
+    )
+    rem_color = fields.Selection(
+        [
+            ("green", "Verde"),
+            ("red", "Rojo"),
+        ],
+        compute="_compute_remaining",
+        store=True,
+    )
 
     traffic_light = fields.Selection(
         [
@@ -645,6 +657,12 @@ class SecActivityBudgetLine(models.Model):
             line.exec_programa = values.get("programa", 0.0)
             line.exec_concurrente = values.get("concurrente", 0.0)
             line.exec_total = values.get("total", 0.0)
+
+    @api.depends("amount_total", "exec_total")
+    def _compute_remaining(self):
+        for line in self:
+            line.rem_total = (line.amount_total or 0.0) - (line.exec_total or 0.0)
+            line.rem_color = "red" if line.rem_total < 0 else "green"
 
     @api.depends(
         "exec_total",
@@ -836,4 +854,3 @@ class SecActivityBudgetLine(models.Model):
             transfer,
             direction="in",
         )
-
