@@ -337,19 +337,7 @@ class SecStage(models.Model):
         store=True,
         currency_field="currency_id",
     )
-    rem_total = fields.Monetary(
-        compute="_compute_remaining",
-        store=True,
-        currency_field="currency_id",
-    )
-    rem_color = fields.Selection(
-        [
-            ("green", "Verde"),
-            ("red", "Rojo"),
-        ],
-        compute="_compute_remaining",
-        store=True,
-    )
+    
     rem_programa = fields.Monetary(
         compute="_compute_execution",
         store=True,
@@ -406,12 +394,7 @@ class SecStage(models.Model):
             stage.rem_concurrente = stage.amount_concurrente - stage.exec_concurrente
             stage.rem_total = stage.amount_total - stage.exec_total
 
-    @api.depends("amount_total", "exec_total")
-    def _compute_remaining(self):
-        for line in self:
-            line.rem_total = (line.amount_total or 0.0) - (line.exec_total or 0.0)
-            line.rem_color = "red" if line.rem_total < 0 else "green"
-
+    
     def _compute_activity_count(self):
         for stage in self:
             stage.activity_count = len(stage.sec_activity_ids)
