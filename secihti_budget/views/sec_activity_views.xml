@@ -59,7 +59,7 @@
                                     <field name="amount_concurrente"/>
                                     <field name="amount_total"/>
                                     <field name="exec_total" readonly="1"/>
-                                    <field name="rem_total" widget="badge" options="{'class_field': 'rem_color'}"/>
+                                    <field name="rem_total" />
                                     <field name="rem_color" invisible="1"/>
                                     <field name="traffic_light_color" invisible="1"/>
                                     <field name="traffic_light" widget="badge" options="{'class_field': 'traffic_light_color'}"/>
