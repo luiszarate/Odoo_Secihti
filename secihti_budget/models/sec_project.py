@@ -337,6 +337,19 @@ class SecStage(models.Model):
         store=True,
         currency_field="currency_id",
     )
+    rem_total = fields.Monetary(
+        compute="_compute_remaining",
+        store=True,
+        currency_field="currency_id",
+    )
+    rem_color = fields.Selection(
+        [
+            ("green", "Verde"),
+            ("red", "Rojo"),
+        ],
+        compute="_compute_remaining",
+        store=True,
+    )
     rem_programa = fields.Monetary(
         compute="_compute_execution",
         store=True,
@@ -491,6 +504,20 @@ class SecActivity(models.Model):
         store=True,
         currency_field="currency_id",
     )
+    rem_total = fields.Monetary(
+        compute="_compute_remaining",
+        store=True,
+        currency_field="currency_id",
+    )
+    rem_color = fields.Selection(
+        [
+            ("green", "Verde"),
+            ("red", "Rojo"),
+        ],
+        compute="_compute_remaining",
+        store=True,
+    )
+
     traffic_light = fields.Selection(
         [
             ("green", "Dentro del presupuesto"),
