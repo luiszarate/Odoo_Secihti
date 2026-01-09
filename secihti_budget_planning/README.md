@@ -67,6 +67,38 @@ The system will show:
    - **Yellow**: Partially allocated
    - **Red**: Not allocated or over-allocated
 
+### Using the Visual Diagram
+
+The Visual Diagram provides a graphical representation similar to a whiteboard planning session:
+
+1. Open a simulation
+2. Click **Open Planning View**
+3. Navigate to the **Visual Diagram** tab
+4. The diagram displays:
+   - **Left Panel**: Budget lines (rubros) from activities, showing:
+     - Activity name and rubro name
+     - Total budget available
+     - Remaining budget (color-coded: green = positive, red = negative)
+     - Amount allocated in this simulation
+   - **Right Panel**: Planned expenses (post-its), showing:
+     - Expense name
+     - Total cost
+     - Amount allocated
+     - Allocation percentage with progress bar
+   - **Connection Lines**: Visual links (like the red lines in the whiteboard photo) showing:
+     - Which budget lines fund which expenses
+     - Color-coded by remaining budget status:
+       - **Green**: Allocation leaves positive remaining budget
+       - **Red**: Allocation causes negative remaining budget
+       - **Blue**: Allocation results in zero remaining budget
+     - Hover over lines to see allocation details
+
+This visual representation makes it easy to:
+- See at a glance how budget flows from rubros to expenses
+- Identify which expenses are funded by multiple rubros
+- Spot over-allocation issues visually
+- Plan budget usage in an intuitive, whiteboard-like manner
+
 ## Data Models
 
 ### sec.budget.simulation
