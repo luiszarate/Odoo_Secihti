@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sec_budget_simulation_user,sec.budget.simulation user,model_sec_budget_simulation,base.group_user,1,0,0,0
+access_sec_budget_simulation_admin,sec.budget.simulation admin,model_sec_budget_simulation,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_planned_expense_user,sec.planned.expense user,model_sec_planned_expense,base.group_user,1,0,0,0
+access_sec_planned_expense_admin,sec.planned.expense admin,model_sec_planned_expense,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_budget_allocation_user,sec.budget.allocation user,model_sec_budget_allocation,base.group_user,1,0,0,0
+access_sec_budget_allocation_admin,sec.budget.allocation admin,model_sec_budget_allocation,secihti_budget.group_sec_admin,1,1,1,1

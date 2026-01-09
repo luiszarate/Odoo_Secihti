@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Main Menu: Simulacion de presupuesto -->
+    <menuitem id="menu_sec_budget_planning_root"
+              name="Simulacion de presupuesto"
+              parent="secihti_budget.menu_sec_root"
+              sequence="50"/>
+
+    <!-- Submenu: Mover rubros (Budget Simulations) -->
+    <menuitem id="menu_sec_mover_rubros"
+              name="Mover rubros"
+              parent="menu_sec_budget_planning_root"
+              action="action_sec_budget_simulation"
+              sequence="10"/>
+
+    <!-- Submenu: Planned Expenses -->
+    <menuitem id="menu_sec_planned_expenses"
+              name="Gastos Planificados"
+              parent="menu_sec_budget_planning_root"
+              action="action_sec_planned_expense"
+              sequence="20"/>
+
+    <!-- Submenu: Budget Allocations -->
+    <menuitem id="menu_sec_budget_allocations"
+              name="Asignaciones de Presupuesto"
+              parent="menu_sec_budget_planning_root"
+              action="action_sec_budget_allocation"
+              sequence="30"/>
+
+</odoo>
