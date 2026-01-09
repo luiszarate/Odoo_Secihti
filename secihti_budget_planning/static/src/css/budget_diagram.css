@@ -1,0 +1,225 @@
+/* Budget Diagram Widget Styles */
+
+.o_budget_diagram_widget {
+    width: 100%;
+    height: 600px;
+    overflow: auto;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.budget_diagram_container {
+    position: relative;
+    display: flex;
+    gap: 20px;
+    min-height: 100%;
+    min-width: 100%;
+}
+
+/* Left Panel - Budget Lines */
+.budget_diagram_left {
+    flex: 0 0 350px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    max-height: calc(600px - 40px);
+}
+
+.budget_diagram_left h4 {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    color: #495057;
+}
+
+/* Right Panel - Planned Expenses */
+.budget_diagram_right {
+    flex: 0 0 350px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    max-height: calc(600px - 40px);
+}
+
+.budget_diagram_right h4 {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #28a745;
+    color: #495057;
+}
+
+/* SVG Canvas for Connections */
+.budget_diagram_connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Budget Line Cards */
+.budget_line_card {
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+
+.budget_line_card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.budget_line_card .card-body {
+    font-size: 12px;
+}
+
+/* Planned Expense Cards (Post-it style) */
+.planned_expense_card {
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #fff9e6;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+}
+
+.planned_expense_card:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.planned_expense_card .card-body {
+    font-size: 12px;
+}
+
+/* Allocation Lines */
+.allocation_line {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.allocation_line:hover {
+    stroke-width: 5;
+    opacity: 1;
+}
+
+/* Status Badges */
+.badge-success {
+    background-color: #28a745;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+}
+
+/* Progress Bar Colors */
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .budget_diagram_left,
+    .budget_diagram_right {
+        flex: 0 0 300px;
+    }
+}
+
+@media (max-width: 992px) {
+    .budget_diagram_container {
+        flex-direction: column;
+    }
+
+    .budget_diagram_left,
+    .budget_diagram_right {
+        flex: 1 1 auto;
+        max-height: 400px;
+    }
+
+    .budget_diagram_connections {
+        display: none;
+    }
+}
+
+/* Empty state */
+.budget_diagram_container .text-muted {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+}
+
+/* Scrollbar styling */
+.budget_diagram_left::-webkit-scrollbar,
+.budget_diagram_right::-webkit-scrollbar {
+    width: 8px;
+}
+
+.budget_diagram_left::-webkit-scrollbar-track,
+.budget_diagram_right::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.budget_diagram_left::-webkit-scrollbar-thumb,
+.budget_diagram_right::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.budget_diagram_left::-webkit-scrollbar-thumb:hover,
+.budget_diagram_right::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Color variations for post-its */
+.planned_expense_card[style*="border-left: 4px solid #ffeb3b"] {
+    background-color: #fffde7;
+}
+
+.planned_expense_card[style*="border-left: 4px solid #4caf50"] {
+    background-color: #f1f8e9;
+}
+
+.planned_expense_card[style*="border-left: 4px solid #2196f3"] {
+    background-color: #e3f2fd;
+}
+
+.planned_expense_card[style*="border-left: 4px solid #ff9800"] {
+    background-color: #fff3e0;
+}
+
+.planned_expense_card[style*="border-left: 4px solid #e91e63"] {
+    background-color: #fce4ec;
+}

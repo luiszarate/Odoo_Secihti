@@ -270,7 +270,25 @@
                             </field>
                         </page>
 
-                        <!-- Tab 3: Budget Lines View (Left side - the rubros) -->
+                        <!-- Tab 3: Visual Diagram -->
+                        <page string="Visual Diagram" name="visual_diagram">
+                            <div class="alert alert-info" role="alert">
+                                <h5 class="alert-heading"><i class="fa fa-info-circle"/> Visual Budget Planning Diagram</h5>
+                                <p>
+                                    This diagram shows:
+                                    <strong>Left:</strong> Budget lines (rubros) with remaining amounts |
+                                    <strong>Right:</strong> Planned expenses |
+                                    <strong>Lines:</strong> Allocations connecting them
+                                </p>
+                                <p class="mb-0">
+                                    <span class="badge badge-success">Green lines</span> = Positive remaining |
+                                    <span class="badge badge-danger">Red lines</span> = Negative remaining
+                                </p>
+                            </div>
+                            <field name="diagram_view" widget="budget_diagram" nolabel="1"/>
+                        </page>
+
+                        <!-- Tab 4: Budget Lines View (Left side - the rubros) -->
                         <page string="Available Budget Lines" name="budget_lines">
                             <group>
                                 <group>

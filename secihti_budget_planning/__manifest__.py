@@ -25,6 +25,7 @@
     'depends': ['secihti_budget'],
     'data': [
         'security/ir.model.access.csv',
+        'views/assets.xml',
         'views/sec_budget_simulation_views.xml',
         'views/sec_planned_expense_views.xml',
         'views/sec_menus.xml',
