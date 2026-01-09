@@ -67,7 +67,7 @@ var BudgetDiagramWidget = AbstractField.extend({
         $leftPanel.append('<h4>Available Budget (Rubros)</h4>');
 
         _.each(this.diagramData.budget_lines, function (line) {
-            var $lineCard = $(QWeb.render('BudgetLineCard', {
+            var $lineCard = $(QWeb.render('secihti_budget_planning.BudgetLineCard', {
                 line: line,
                 currency: self.diagramData.currency_symbol
             }));
@@ -80,7 +80,7 @@ var BudgetDiagramWidget = AbstractField.extend({
         $rightPanel.append('<h4>Planned Expenses</h4>');
 
         _.each(this.diagramData.planned_expenses, function (expense) {
-            var $expenseCard = $(QWeb.render('PlannedExpenseCard', {
+            var $expenseCard = $(QWeb.render('secihti_budget_planning.PlannedExpenseCard', {
                 expense: expense,
                 currency: self.diagramData.currency_symbol
             }));

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- QWeb Templates for Budget Diagram Widget -->
+    <template id="secihti_budget_planning.BudgetLineCard" name="Budget Line Card Template">
+        <div class="budget_line_card card mb-2" t-attf-data-line-id="#{line.id}">
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="font-weight-bold text-truncate" t-att-title="line.activity_name">
+                            <t t-esc="line.activity_name"/>
+                        </div>
+                        <div class="text-muted small text-truncate" t-att-title="line.rubro_name">
+                            <t t-esc="line.rubro_name"/>
+                        </div>
+                    </div>
+                    <div class="ml-2 text-right">
+                        <div class="badge" t-attf-class="badge-#{line.rem_total >= 0 ? 'success' : 'danger'}">
+                            <t t-esc="currency"/> <t t-esc="line.rem_total.toFixed(0)"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-1 small text-muted">
+                    <div>Total: <t t-esc="currency"/> <t t-esc="line.amount_total.toFixed(0)"/></div>
+                    <div t-if="line.simulated_allocated > 0" class="text-warning">
+                        Allocated: <t t-esc="currency"/> <t t-esc="line.simulated_allocated.toFixed(0)"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="secihti_budget_planning.PlannedExpenseCard" name="Planned Expense Card Template">
+        <div class="planned_expense_card card mb-2" t-attf-data-expense-id="#{expense.id}" t-attf-style="border-left: 4px solid #{expense.color};">
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="font-weight-bold text-truncate" t-att-title="expense.name">
+                            <t t-esc="expense.name"/>
+                        </div>
+                        <div class="mt-1">
+                            <div class="small">
+                                <span class="text-muted">Cost:</span>
+                                <span class="font-weight-bold"><t t-esc="currency"/> <t t-esc="expense.amount.toFixed(0)"/></span>
+                            </div>
+                            <div class="small">
+                                <span class="text-muted">Allocated:</span>
+                                <span t-attf-class="font-weight-bold #{expense.allocated_amount >= expense.amount ? 'text-success' : 'text-warning'}">
+                                    <t t-esc="currency"/> <t t-esc="expense.allocated_amount.toFixed(0)"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-2">
+                        <div class="badge" t-attf-class="badge-#{expense.allocation_status_class}">
+                            <t t-esc="Math.round(expense.allocation_percentage)"/>%
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar" t-attf-class="bg-#{expense.allocation_status_class}"
+                         role="progressbar"
+                         t-attf-style="width: #{expense.allocation_percentage}%"
+                         t-attf-aria-valuenow="#{expense.allocation_percentage}"
+                         aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</odoo>
