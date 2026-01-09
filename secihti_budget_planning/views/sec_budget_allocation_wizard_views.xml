@@ -9,28 +9,41 @@
             <form string="Quick Allocate Budget">
                 <sheet>
                     <div class="alert alert-info" role="alert">
-                        <p><strong>Quick Allocation Wizard</strong></p>
-                        <p>Select budget lines below and enter the amounts you want to allocate to this expense.</p>
+                        <p><strong>🚀 Quick Allocation Wizard</strong></p>
+                        <p>This wizard helps you quickly allocate budget from multiple sources to complete your expense.</p>
+                        <ul class="mb-0">
+                            <li>Budget lines are sorted by available amount (highest first)</li>
+                            <li>The <strong>"Suggested"</strong> column shows optimal amounts</li>
+                            <li>Enter custom amounts or use <strong>"Use Suggested Amounts"</strong> button</li>
+                        </ul>
                     </div>
 
                     <group>
-                        <group>
-                            <field name="planned_expense_id" readonly="1"/>
-                            <field name="simulation_id" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="expense_amount" widget="monetary"/>
-                            <field name="allocated_amount" widget="monetary"/>
-                            <field name="remaining_amount" widget="monetary" class="text-danger font-weight-bold"/>
+                        <group string="Expense Summary">
+                            <field name="planned_expense_id" readonly="1" string="Expense"/>
+                            <field name="simulation_id" readonly="1" invisible="1"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Allocation Progress">
+                            <label for="expense_amount" string="Status"/>
+                            <div>
+                                <div class="o_row">
+                                    <span class="text-muted">Total Cost:</span>
+                                    <field name="expense_amount" widget="monetary" readonly="1" class="oe_inline"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="text-muted">Already Allocated:</span>
+                                    <field name="allocated_amount" widget="monetary" readonly="1" class="oe_inline"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="font-weight-bold text-primary">Still Needs:</span>
+                                    <field name="remaining_amount" widget="monetary" readonly="1" class="oe_inline font-weight-bold text-primary"/>
+                                </div>
+                            </div>
                         </group>
                     </group>
 
-                    <group string="Available Budget Lines">
-                        <p class="text-muted">
-                            Budget lines are sorted by available budget (highest first).
-                            The "Suggested" column shows the recommended allocation for each line.
-                        </p>
+                    <group string="💰 Available Budget Lines">
                         <field name="allocation_line_ids" nolabel="1">
                             <tree string="Budget Lines" editable="bottom" decoration-muted="available_amount == 0">
                                 <field name="sequence" widget="handle"/>

@@ -57,8 +57,19 @@ class SecBudgetAllocationWizard(models.TransientModel):
         """Populate wizard with available budget lines"""
         res = super().default_get(fields_list)
 
-        if 'planned_expense_id' in res and res['planned_expense_id']:
-            expense = self.env['sec.planned.expense'].browse(res['planned_expense_id'])
+        # Get planned_expense_id from context if not in res
+        expense_id = res.get('planned_expense_id') or self._context.get('default_planned_expense_id')
+        simulation_id = res.get('simulation_id') or self._context.get('default_simulation_id')
+
+        if expense_id:
+            expense = self.env['sec.planned.expense'].browse(expense_id)
+
+            if not expense.exists():
+                return res
+
+            # Set IDs if not already set
+            res['planned_expense_id'] = expense.id
+            res['simulation_id'] = simulation_id or expense.simulation_id.id
 
             # Get available budget lines
             available_lines = expense._get_available_budget_lines()
@@ -68,8 +79,12 @@ class SecBudgetAllocationWizard(models.TransientModel):
             for budget_line in available_lines:
                 simulated_remaining = expense._get_simulated_remaining(budget_line)
 
+                # Skip lines with no remaining budget
+                if simulated_remaining <= 0:
+                    continue
+
                 # Suggest amount: min of (remaining expense, simulated remaining)
-                suggested_amount = min(expense.remaining_amount, simulated_remaining)
+                suggested_amount = min(expense.remaining_amount, simulated_remaining) if expense.remaining_amount > 0 else 0
 
                 wizard_lines.append((0, 0, {
                     'budget_line_id': budget_line.id,
@@ -88,6 +103,9 @@ class SecBudgetAllocationWizard(models.TransientModel):
         """Create allocations from selected lines"""
         self.ensure_one()
 
+        if not self.allocation_line_ids:
+            raise UserError(_('No budget lines available. Please check that there are activities with remaining budget in this project.'))
+
         # Get lines with amount > 0
         lines_to_allocate = self.allocation_line_ids.filtered(lambda l: l.amount > 0)
 
@@ -105,15 +123,18 @@ class SecBudgetAllocationWizard(models.TransientModel):
                 'amount': line.amount,
             })
 
-        # Show success message
+        # Return action to close wizard and show notification
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Success!'),
-                'message': _('%s allocation(s) created successfully.') % len(allocations),
+                'message': _('%s allocation(s) created successfully. Total allocated: %s') % (
+                    len(allocations),
+                    sum(allocations.mapped('amount'))
+                ),
                 'type': 'success',
-                'sticky': False,
+                'next': {'type': 'ir.actions.act_window_close'},
             }
         }
 

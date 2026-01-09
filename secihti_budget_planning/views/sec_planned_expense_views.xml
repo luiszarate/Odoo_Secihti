@@ -108,12 +108,17 @@
                                 </tree>
                                 <form string="Budget Allocation">
                                     <sheet>
-                                        <!-- Warning banner for over-allocation -->
+                                        <!-- Status banners -->
                                         <div class="alert alert-danger" role="alert" attrs="{'invisible': ['&amp;', ('is_over_allocating', '=', False), ('is_over_allocating_expense', '=', False)]}">
                                             <strong>⚠ Warning:</strong> <field name="allocation_warning_message"/>
                                         </div>
+                                        <div class="alert alert-info" role="alert" attrs="{'invisible': [('expense_remaining_amount', '&lt;=', 0)]}">
+                                            <strong>💡 Info:</strong> This expense still needs <field name="expense_remaining_amount" widget="monetary"/> (currently at <field name="expense_allocation_percentage"/>%)
+                                        </div>
                                         <field name="is_over_allocating" invisible="1"/>
                                         <field name="is_over_allocating_expense" invisible="1"/>
+                                        <field name="expense_remaining_amount" invisible="1"/>
+                                        <field name="expense_allocation_percentage" invisible="1"/>
 
                                         <group>
                                             <group>
@@ -289,6 +294,10 @@
                     <div class="alert alert-success" role="alert" attrs="{'invisible': ['|', ('simulated_remaining_status', '!=', 'positive'), ('is_over_allocating_expense', '=', True)]}">
                         <strong>✓ Looking good!</strong> This allocation is within budget limits.
                     </div>
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('expense_remaining_amount', '&lt;=', 0)]}">
+                        <strong>💡 Tip:</strong> This expense still needs <field name="expense_remaining_amount" widget="monetary"/> to reach 100% allocation.
+                        <br/>Current progress: <field name="expense_allocation_percentage"/>%
+                    </div>
                     <field name="is_over_allocating" invisible="1"/>
                     <field name="is_over_allocating_expense" invisible="1"/>
                     <field name="allocation_warning_message" invisible="1"/>
@@ -307,7 +316,29 @@
                             <field name="project_id" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Budget Information">
+                    <group string="Planned Expense Status">
+                        <group>
+                            <label for="expense_amount" string="Expense Details"/>
+                            <div>
+                                <div class="o_row">
+                                    <span class="text-muted">Total Cost:</span>
+                                    <field name="expense_amount" readonly="1" widget="monetary" class="oe_inline"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="text-muted">Already Allocated:</span>
+                                    <field name="expense_allocated_amount" readonly="1" widget="monetary" class="oe_inline"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="text-muted font-weight-bold">Still Needs:</span>
+                                    <field name="expense_remaining_amount" readonly="1" widget="monetary" class="oe_inline font-weight-bold text-primary"/>
+                                </div>
+                            </div>
+                        </group>
+                        <group>
+                            <field name="expense_allocation_percentage" widget="percentpie" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Budget Line Information">
                         <group>
                             <label for="line_amount_total" string="Budget Line Totals"/>
                             <div>

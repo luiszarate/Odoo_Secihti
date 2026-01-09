@@ -126,6 +126,34 @@ class SecBudgetAllocation(models.Model):
         help='Warning message if there are allocation issues'
     )
 
+    # Planned Expense Information (UX Enhancement)
+    expense_amount = fields.Monetary(
+        string='Expense Total',
+        related='planned_expense_id.amount',
+        readonly=True,
+        help='Total amount of the planned expense'
+    )
+
+    expense_allocated_amount = fields.Monetary(
+        string='Expense Already Allocated',
+        related='planned_expense_id.allocated_amount',
+        readonly=True,
+        help='Amount already allocated to this expense (including this allocation)'
+    )
+
+    expense_remaining_amount = fields.Monetary(
+        string='Expense Still Needs',
+        compute='_compute_expense_remaining',
+        store=True,
+        help='Amount still needed to complete this expense (excluding this allocation)'
+    )
+
+    expense_allocation_percentage = fields.Float(
+        string='Expense Completion %',
+        related='planned_expense_id.allocation_percentage',
+        readonly=True
+    )
+
     currency_id = fields.Many2one(
         'res.currency',
         related='simulation_id.currency_id',
@@ -235,6 +263,19 @@ class SecBudgetAllocation(models.Model):
             allocation.is_over_allocating = over_budget
             allocation.is_over_allocating_expense = over_expense
             allocation.allocation_warning_message = warning_msg
+
+    @api.depends('planned_expense_id.amount', 'planned_expense_id.allocated_amount', 'amount')
+    def _compute_expense_remaining(self):
+        """Calculate how much is still needed to complete the expense (excluding this allocation)"""
+        for allocation in self:
+            if allocation.planned_expense_id:
+                expense = allocation.planned_expense_id
+                # Calculate remaining excluding this allocation
+                other_allocations = expense.allocation_ids.filtered(lambda a: a.id != allocation.id)
+                already_allocated = sum(other_allocations.mapped('amount'))
+                allocation.expense_remaining_amount = expense.amount - already_allocated
+            else:
+                allocation.expense_remaining_amount = 0
 
     @api.constrains('amount')
     def _check_amount_positive(self):

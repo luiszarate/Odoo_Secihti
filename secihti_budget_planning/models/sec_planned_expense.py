@@ -240,6 +240,21 @@ class SecPlannedExpense(models.Model):
         """Quick allocation wizard - allocates from available budget lines"""
         self.ensure_one()
 
+        # Check if there are available budget lines
+        available_lines = self._get_available_budget_lines()
+
+        if not available_lines:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('No Budget Available'),
+                    'message': _('There are no budget lines with remaining budget available for this project. Please check your project activities and budget lines.'),
+                    'type': 'warning',
+                    'sticky': True,
+                }
+            }
+
         # Return wizard action
         return {
             'type': 'ir.actions.act_window',
