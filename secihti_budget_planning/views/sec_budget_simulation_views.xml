@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Budget Simulation Tree View -->
+    <record id="view_sec_budget_simulation_tree" model="ir.ui.view">
+        <field name="name">sec.budget.simulation.tree</field>
+        <field name="model">sec.budget.simulation</field>
+        <field name="arch" type="xml">
+            <tree string="Budget Simulations">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="project_id"/>
+                <field name="stage_id"/>
+                <field name="total_planned_amount" sum="Total Planned"/>
+                <field name="total_allocated_amount" sum="Total Allocated"/>
+                <field name="total_unallocated_amount" sum="Total Unallocated"/>
+                <field name="state" decoration-info="state == 'draft'" decoration-success="state == 'active'" decoration-muted="state == 'archived'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Budget Simulation Form View -->
+    <record id="view_sec_budget_simulation_form" model="ir.ui.view">
+        <field name="name">sec.budget.simulation.form</field>
+        <field name="model">sec.budget.simulation</field>
+        <field name="arch" type="xml">
+            <form string="Budget Simulation">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" states="draft,archived" class="oe_highlight"/>
+                    <button name="action_archive" string="Archive" type="object" states="draft,active"/>
+                    <button name="action_set_draft" string="Set to Draft" type="object" states="archived"/>
+                    <button name="action_view_graphical_planning" string="Open Planning View" type="object" class="oe_highlight" icon="fa-sitemap"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,archived"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Future: Add smart buttons here -->
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="project_id"/>
+                            <field name="stage_id"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_planned_amount"/>
+                            <field name="total_allocated_amount"/>
+                            <field name="total_unallocated_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe the purpose of this simulation..."/>
+                    </group>
+                    <notebook>
+                        <page string="Planned Expenses" name="planned_expenses">
+                            <field name="planned_expense_ids" context="{'default_simulation_id': id}">
+                                <tree string="Planned Expenses" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="amount" sum="Total"/>
+                                    <field name="allocated_amount" sum="Total Allocated"/>
+                                    <field name="remaining_amount" sum="Total Remaining"/>
+                                    <field name="allocation_percentage" widget="progressbar"/>
+                                    <field name="allocation_status"
+                                           decoration-success="allocation_status == 'fully_allocated'"
+                                           decoration-warning="allocation_status == 'partially_allocated'"
+                                           decoration-danger="allocation_status in ('not_allocated', 'over_allocated')"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <button name="action_view_allocations" type="object" icon="fa-link" title="View Allocations"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Additional notes and observations..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Budget Simulation Kanban View -->
+    <record id="view_sec_budget_simulation_kanban" model="ir.ui.view">
+        <field name="name">sec.budget.simulation.kanban</field>
+        <field name="model">sec.budget.simulation</field>
+        <field name="arch" type="xml">
+            <kanban string="Budget Simulations">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="state"/>
+                <field name="total_planned_amount"/>
+                <field name="total_allocated_amount"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                    <br/>
+                                    <span class="o_kanban_record_subtitle"><field name="project_id"/></span>
+                                </div>
+                                <span class="float-right badge badge-pill" t-attf-class="badge-#{record.state.raw_value == 'active' ? 'success' : record.state.raw_value == 'draft' ? 'info' : 'secondary'}">
+                                    <field name="state"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="description"/>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span>Planned: <field name="total_planned_amount" widget="monetary"/></span><br/>
+                                    <span>Allocated: <field name="total_allocated_amount" widget="monetary"/></span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <field name="date"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Budget Simulation Planning Form View (Graphical Interface) -->
+    <record id="view_sec_budget_simulation_planning_form" model="ir.ui.view">
+        <field name="name">sec.budget.simulation.planning.form</field>
+        <field name="model">sec.budget.simulation</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Budget Planning" class="o_budget_planning_form">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" states="draft,archived" class="oe_highlight"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,archived"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <h1><field name="name" placeholder="Simulation Name"/></h1>
+                            <field name="project_id" options="{'no_create': True}"/>
+                            <field name="stage_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <label for="total_planned_amount" string="Summary"/>
+                            <div>
+                                <div class="o_row">
+                                    <span class="text-muted">Planned:</span>
+                                    <field name="total_planned_amount" widget="monetary"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="text-muted">Allocated:</span>
+                                    <field name="total_allocated_amount" widget="monetary"/>
+                                </div>
+                                <div class="o_row">
+                                    <span class="text-muted">Remaining:</span>
+                                    <field name="total_unallocated_amount" widget="monetary"/>
+                                </div>
+                            </div>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">Budget Planning Instructions</h4>
+                        <p>
+                            <strong>Left side:</strong> Activities and their budget lines (rubros) showing remaining budgets.<br/>
+                            <strong>Right side:</strong> Planned expenses that need funding.<br/>
+                            <strong>Allocations:</strong> Connect budget lines to expenses by creating allocations - each expense can be funded from multiple rubros.
+                        </p>
+                    </div>
+
+                    <notebook>
+                        <!-- Tab 1: Planned Expenses (Post-its) -->
+                        <page string="Planned Expenses" name="planned_expenses">
+                            <field name="planned_expense_ids" context="{'default_simulation_id': id}" mode="kanban">
+                                <kanban class="o_kanban_small_column">
+                                    <field name="color"/>
+                                    <field name="allocation_status"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_global_click">
+                                                <div class="oe_kanban_content">
+                                                    <div class="o_kanban_record_top mb8">
+                                                        <div class="o_kanban_record_headings">
+                                                            <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                                        </div>
+                                                        <span class="float-right badge" t-attf-class="badge-#{record.allocation_status.raw_value == 'fully_allocated' ? 'success' : record.allocation_status.raw_value == 'partially_allocated' ? 'warning' : 'danger'}">
+                                                            <field name="allocation_percentage" widget="integer"/>%
+                                                        </span>
+                                                    </div>
+                                                    <div class="o_kanban_record_body">
+                                                        <div><strong>Amount:</strong> <field name="amount" widget="monetary"/></div>
+                                                        <div><strong>Allocated:</strong> <field name="allocated_amount" widget="monetary"/></div>
+                                                        <div><strong>Remaining:</strong> <field name="remaining_amount" widget="monetary"/></div>
+                                                    </div>
+                                                    <div class="o_kanban_record_bottom mt8">
+                                                        <div class="oe_kanban_bottom_right">
+                                                            <button name="action_view_allocations" type="object" class="btn btn-sm btn-link" title="Manage Allocations">
+                                                                <i class="fa fa-link"/> Allocations
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form string="Planned Expense">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="name"/>
+                                                <field name="amount"/>
+                                                <field name="color" widget="color_picker"/>
+                                            </group>
+                                            <group>
+                                                <field name="allocated_amount"/>
+                                                <field name="remaining_amount"/>
+                                                <field name="allocation_percentage" widget="percentpie"/>
+                                                <field name="allocation_status"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="notes" placeholder="Additional notes..."/>
+                                        </group>
+                                        <notebook>
+                                            <page string="Allocations" name="allocations">
+                                                <field name="allocation_ids">
+                                                    <tree string="Budget Allocations" editable="bottom">
+                                                        <field name="simulation_id" invisible="1"/>
+                                                        <field name="activity_id"/>
+                                                        <field name="budget_line_id" domain="[('activity_id', '=', activity_id)]"/>
+                                                        <field name="rubro_id"/>
+                                                        <field name="amount"/>
+                                                        <field name="line_rem_total"/>
+                                                        <field name="simulated_remaining"
+                                                               decoration-success="simulated_remaining_status == 'positive'"
+                                                               decoration-info="simulated_remaining_status == 'zero'"
+                                                               decoration-danger="simulated_remaining_status == 'negative'"/>
+                                                        <field name="simulated_remaining_status" invisible="1"/>
+                                                        <field name="currency_id" invisible="1"/>
+                                                    </tree>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- Tab 2: All Allocations -->
+                        <page string="All Allocations" name="all_allocations">
+                            <field name="planned_expense_ids" mode="tree">
+                                <tree string="Allocations Overview">
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="allocated_amount"/>
+                                    <field name="allocation_status"
+                                           decoration-success="allocation_status == 'fully_allocated'"
+                                           decoration-warning="allocation_status == 'partially_allocated'"
+                                           decoration-danger="allocation_status in ('not_allocated', 'over_allocated')"/>
+                                    <button name="action_view_allocations" type="object" icon="fa-link" title="View Allocations"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <!-- Tab 3: Budget Lines View (Left side - the rubros) -->
+                        <page string="Available Budget Lines" name="budget_lines">
+                            <group>
+                                <group>
+                                    <field name="project_id" readonly="1"/>
+                                    <field name="stage_id" readonly="1"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-warning" role="alert" attrs="{'invisible': [('stage_id', '!=', False)]}">
+                                <p><i class="fa fa-warning"/> Please select a stage to view budget lines, or leave empty to view all budget lines in the project.</p>
+                            </div>
+                            <!-- We'll show activities and their budget lines here -->
+                            <group string="Activities and Budget Lines">
+                                <p class="text-muted">
+                                    This section shows the available budget lines (rubros) for each activity.
+                                    Use these to create allocations to your planned expenses.
+                                </p>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Budget Simulation Search View -->
+    <record id="view_sec_budget_simulation_search" model="ir.ui.view">
+        <field name="name">sec.budget.simulation.search</field>
+        <field name="model">sec.budget.simulation</field>
+        <field name="arch" type="xml">
+            <search string="Budget Simulations">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="stage_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Archived" name="archived" domain="[('state', '=', 'archived')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Project" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="Stage" name="group_by_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Date" name="group_by_date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Budget Simulation Action -->
+    <record id="action_sec_budget_simulation" model="ir.actions.act_window">
+        <field name="name">Budget Simulations</field>
+        <field name="res_model">sec.budget.simulation</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new budget simulation
+            </p>
+            <p>
+                Budget simulations allow you to plan how to use your remaining budget
+                by creating planned expenses and allocating budget from multiple rubros.
+            </p>
+        </field>
+    </record>
+
+</odoo>
