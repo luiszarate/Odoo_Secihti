@@ -107,6 +107,25 @@ class SecBudgetAllocation(models.Model):
         help='Color indicator for simulated remaining'
     )
 
+    # UX Enhancement fields
+    is_over_allocating = fields.Boolean(
+        string='Over-allocating',
+        compute='_compute_allocation_warnings',
+        help='True if this allocation would cause over-allocation'
+    )
+
+    is_over_allocating_expense = fields.Boolean(
+        string='Over-allocating Expense',
+        compute='_compute_allocation_warnings',
+        help='True if this allocation would cause the expense to be over-allocated'
+    )
+
+    allocation_warning_message = fields.Char(
+        string='Warning Message',
+        compute='_compute_allocation_warnings',
+        help='Warning message if there are allocation issues'
+    )
+
     currency_id = fields.Many2one(
         'res.currency',
         related='simulation_id.currency_id',
@@ -184,6 +203,39 @@ class SecBudgetAllocation(models.Model):
             allocation.simulated_remaining_status = status
             allocation.simulated_remaining_color = color
 
+    @api.depends('amount', 'budget_line_id', 'planned_expense_id.remaining_amount', 'simulated_remaining')
+    def _compute_allocation_warnings(self):
+        """Compute warning flags for allocation issues"""
+        for allocation in self:
+            over_budget = False
+            over_expense = False
+            warning_msg = False
+
+            if allocation.amount and allocation.budget_line_id:
+                # Check if allocation exceeds simulated remaining
+                if allocation.simulated_remaining < 0:
+                    over_budget = True
+                    warning_msg = _('This allocation exceeds the available budget for this budget line (would result in %s over-allocation).') % abs(allocation.simulated_remaining)
+
+            if allocation.amount and allocation.planned_expense_id:
+                # Check if allocation would over-allocate the expense
+                expense = allocation.planned_expense_id
+                # Calculate what remaining would be after this allocation
+                other_allocations = expense.allocation_ids.filtered(lambda a: a.id != allocation.id)
+                total_other = sum(other_allocations.mapped('amount'))
+                would_be_remaining = expense.amount - total_other - allocation.amount
+
+                if would_be_remaining < 0:
+                    over_expense = True
+                    if warning_msg:
+                        warning_msg += ' ' + _('Also, this would over-allocate the expense by %s.') % abs(would_be_remaining)
+                    else:
+                        warning_msg = _('This allocation would over-allocate the expense by %s.') % abs(would_be_remaining)
+
+            allocation.is_over_allocating = over_budget
+            allocation.is_over_allocating_expense = over_expense
+            allocation.allocation_warning_message = warning_msg
+
     @api.constrains('amount')
     def _check_amount_positive(self):
         for allocation in self:
@@ -231,6 +283,57 @@ class SecBudgetAllocation(models.Model):
             return {
                 'domain': {
                     'budget_line_id': []
+                }
+            }
+
+    @api.onchange('amount', 'budget_line_id', 'planned_expense_id')
+    def _onchange_amount_check_warnings(self):
+        """Show warnings when amount would cause over-allocation"""
+        if not self.amount or self.amount <= 0:
+            return
+
+        warnings = []
+
+        # Check budget line over-allocation
+        if self.budget_line_id:
+            # Calculate what simulated remaining would be
+            real_remaining = self.budget_line_id.rem_total
+
+            # Get other allocations for this budget line in this simulation
+            if self.simulation_id and self.budget_line_id:
+                other_allocations = self.env['sec.budget.allocation'].search([
+                    ('simulation_id', '=', self.simulation_id.id),
+                    ('budget_line_id', '=', self.budget_line_id.id),
+                    ('id', '!=', self.id if self.id else 0)
+                ])
+                total_other = sum(other_allocations.mapped('amount'))
+                would_be_remaining = real_remaining - total_other - self.amount
+
+                if would_be_remaining < 0:
+                    warnings.append(_('⚠️ Budget Warning: This allocation would exceed the available budget by %s.') % abs(would_be_remaining))
+
+        # Check expense over-allocation
+        if self.planned_expense_id:
+            expense = self.planned_expense_id
+            other_allocations = expense.allocation_ids.filtered(lambda a: a.id != self.id)
+            total_other = sum(other_allocations.mapped('amount'))
+            would_be_remaining = expense.amount - total_other - self.amount
+
+            if would_be_remaining < 0:
+                warnings.append(_('⚠️ Expense Warning: This would over-allocate the expense by %s.') % abs(would_be_remaining))
+            elif would_be_remaining == 0:
+                return {
+                    'warning': {
+                        'title': _('Perfect Allocation!'),
+                        'message': _('✓ This allocation will complete the expense to exactly 100%.'),
+                    }
+                }
+
+        if warnings:
+            return {
+                'warning': {
+                    'title': _('Over-allocation Warning'),
+                    'message': '\n'.join(warnings),
                 }
             }
 
