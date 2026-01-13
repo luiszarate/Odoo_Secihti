@@ -314,6 +314,38 @@ class SecBudgetAllocation(models.Model):
                 }
             }
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Update simulation result lines when allocations are created"""
+        records = super().create(vals_list)
+        simulations = records.mapped('simulation_id')
+        for simulation in simulations:
+            simulation._update_result_lines()
+        return records
+
+    def write(self, vals):
+        """Update simulation result lines when allocations are modified"""
+        simulations = self.mapped('simulation_id')
+        result = super().write(vals)
+        for simulation in simulations:
+            simulation._update_result_lines()
+        # If simulation_id changed, update the new simulation too
+        if 'simulation_id' in vals:
+            new_simulations = self.mapped('simulation_id')
+            for simulation in new_simulations:
+                if simulation not in simulations:
+                    simulation._update_result_lines()
+        return result
+
+    def unlink(self):
+        """Update simulation result lines when allocations are deleted"""
+        simulations = self.mapped('simulation_id')
+        result = super().unlink()
+        for simulation in simulations:
+            if simulation.exists():
+                simulation._update_result_lines()
+        return result
+
     @api.onchange('amount', 'budget_line_id', 'planned_expense_id')
     def _onchange_amount_check_warnings(self):
         """Show warnings when amount would cause over-allocation"""

@@ -86,6 +86,13 @@ class SecBudgetSimulation(models.Model):
         help='Additional notes about this simulation'
     )
 
+    result_line_ids = fields.One2many(
+        'sec.budget.simulation.result.line',
+        'simulation_id',
+        string='Simulation Results by Budget Line',
+        help='Shows how each budget line (rubro) will look after the simulation'
+    )
+
     @api.depends('planned_expense_ids.amount', 'planned_expense_ids.allocated_amount')
     def _compute_totals(self):
         for simulation in self:
@@ -122,3 +129,126 @@ class SecBudgetSimulation(models.Model):
             'target': 'current',
             'context': {'form_view_ref': 'secihti_budget_planning.view_sec_budget_simulation_planning_form'}
         }
+
+    def _update_result_lines(self):
+        """Update result lines based on current allocations"""
+        self.ensure_one()
+
+        # Delete existing result lines
+        self.result_line_ids.unlink()
+
+        # Group allocations by budget_line_id
+        allocations_by_line = {}
+        for allocation in self.planned_expense_ids.mapped('allocation_ids'):
+            line_id = allocation.budget_line_id.id
+            if line_id not in allocations_by_line:
+                allocations_by_line[line_id] = {
+                    'budget_line': allocation.budget_line_id,
+                    'total_allocated': 0
+                }
+            allocations_by_line[line_id]['total_allocated'] += allocation.amount
+
+        # Create result lines
+        ResultLine = self.env['sec.budget.simulation.result.line']
+        for line_id, data in allocations_by_line.items():
+            budget_line = data['budget_line']
+            ResultLine.create({
+                'simulation_id': self.id,
+                'budget_line_id': budget_line.id,
+                'total_allocated': data['total_allocated'],
+            })
+
+
+class SecBudgetSimulationResultLine(models.Model):
+    _name = 'sec.budget.simulation.result.line'
+    _description = 'Budget Simulation Result Line'
+    _order = 'activity_id, rubro_id'
+
+    simulation_id = fields.Many2one(
+        'sec.budget.simulation',
+        string='Simulation',
+        required=True,
+        ondelete='cascade',
+        index=True
+    )
+
+    budget_line_id = fields.Many2one(
+        'sec.activity.budget.line',
+        string='Budget Line',
+        required=True,
+        ondelete='cascade'
+    )
+
+    activity_id = fields.Many2one(
+        'sec.activity',
+        related='budget_line_id.activity_id',
+        string='Activity',
+        readonly=True,
+        store=True
+    )
+
+    rubro_id = fields.Many2one(
+        'sec.rubro',
+        related='budget_line_id.rubro_id',
+        string='Rubro',
+        readonly=True,
+        store=True
+    )
+
+    # Budget line amounts
+    line_amount_total = fields.Monetary(
+        string='Total Budget',
+        related='budget_line_id.amount_total',
+        readonly=True,
+        currency_field='currency_id'
+    )
+
+    line_rem_total = fields.Monetary(
+        string='Real Remaining',
+        related='budget_line_id.rem_total',
+        readonly=True,
+        currency_field='currency_id',
+        help='Real remaining budget before simulation'
+    )
+
+    # Simulation amounts
+    total_allocated = fields.Monetary(
+        string='Allocated in Simulation',
+        currency_field='currency_id',
+        help='Total amount allocated from this budget line in this simulation'
+    )
+
+    simulated_remaining = fields.Monetary(
+        string='Simulated Remaining',
+        compute='_compute_simulated_remaining',
+        store=True,
+        currency_field='currency_id',
+        help='Remaining budget after applying this simulation'
+    )
+
+    simulated_remaining_status = fields.Selection([
+        ('positive', 'Positive'),
+        ('zero', 'Zero'),
+        ('negative', 'Negative')
+    ], string='Status', compute='_compute_simulated_remaining', store=True)
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        related='simulation_id.currency_id',
+        string='Currency',
+        readonly=True,
+        store=True
+    )
+
+    @api.depends('line_rem_total', 'total_allocated')
+    def _compute_simulated_remaining(self):
+        for line in self:
+            simulated_rem = (line.line_rem_total or 0) - (line.total_allocated or 0)
+            line.simulated_remaining = simulated_rem
+
+            if simulated_rem > 0:
+                line.simulated_remaining_status = 'positive'
+            elif simulated_rem == 0:
+                line.simulated_remaining_status = 'zero'
+            else:
+                line.simulated_remaining_status = 'negative'

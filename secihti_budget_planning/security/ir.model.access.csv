@@ -5,3 +5,5 @@ access_sec_planned_expense_user,sec.planned.expense user,model_sec_planned_expen
 access_sec_planned_expense_admin,sec.planned.expense admin,model_sec_planned_expense,secihti_budget.group_sec_admin,1,1,1,1
 access_sec_budget_allocation_user,sec.budget.allocation user,model_sec_budget_allocation,base.group_user,1,0,0,0
 access_sec_budget_allocation_admin,sec.budget.allocation admin,model_sec_budget_allocation,secihti_budget.group_sec_admin,1,1,1,1
+access_sec_budget_simulation_result_line_user,sec.budget.simulation.result.line user,model_sec_budget_simulation_result_line,base.group_user,1,0,0,0
+access_sec_budget_simulation_result_line_admin,sec.budget.simulation.result.line admin,model_sec_budget_simulation_result_line,secihti_budget.group_sec_admin,1,1,1,1

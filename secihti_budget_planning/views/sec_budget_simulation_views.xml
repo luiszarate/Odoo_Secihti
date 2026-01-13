@@ -72,6 +72,25 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Simulation Results" name="simulation_results">
+                            <group>
+                                <p class="text-muted">
+                                    Esta tabla muestra cómo quedarán los rubros (líneas de presupuesto) después de aplicar esta simulación.
+                                </p>
+                            </group>
+                            <field name="result_line_ids" readonly="1">
+                                <tree string="Budget Lines After Simulation" decoration-danger="simulated_remaining_status == 'negative'" decoration-warning="simulated_remaining_status == 'zero'" decoration-success="simulated_remaining_status == 'positive'">
+                                    <field name="activity_id"/>
+                                    <field name="rubro_id"/>
+                                    <field name="line_amount_total" string="Total Budget" sum="Total Budget"/>
+                                    <field name="line_rem_total" string="Real Remaining" sum="Real Remaining"/>
+                                    <field name="total_allocated" string="Allocated in Simulation" sum="Total Allocated"/>
+                                    <field name="simulated_remaining" string="Remaining After Simulation" sum="Remaining After Simulation"/>
+                                    <field name="simulated_remaining_status" invisible="1"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page string="Notes" name="notes">
                             <field name="notes" placeholder="Additional notes and observations..."/>
                         </page>
