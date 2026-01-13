@@ -32,10 +32,6 @@
             <form string="Planned Expense">
                 <header>
                     <button name="action_view_allocations" string="Manage Allocations" type="object" class="oe_highlight" icon="fa-link"/>
-                    <button name="action_quick_allocate" string="Quick Allocate" type="object" class="btn-primary" icon="fa-magic"/>
-                    <button name="action_auto_complete_allocation" string="Complete to 100%" type="object"
-                            class="btn-success" icon="fa-check-circle"
-                            attrs="{'invisible': [('can_auto_complete', '=', False)]}"/>
                 </header>
                 <sheet>
                     <!-- Status Alert Banners -->
@@ -44,19 +40,14 @@
                     </div>
                     <div class="alert alert-warning" role="alert" attrs="{'invisible': [('allocation_status', '!=', 'partially_allocated')]}">
                         <strong>⚠ Partially Allocated</strong> - <field name="remaining_amount" widget="monetary"/> still needs to be allocated.
-                        <span attrs="{'invisible': [('can_auto_complete', '=', False)]}">
-                            <br/>✓ Good news: There are <field name="available_budget_lines_count"/> budget line(s) with enough remaining to complete this expense. Click "Complete to 100%" above!
-                        </span>
                     </div>
                     <div class="alert alert-danger" role="alert" attrs="{'invisible': ['|', ('allocation_status', '!=', 'not_allocated'), ('remaining_amount', '&lt;=', 0)]}">
-                        <strong>⚠ Not Allocated</strong> - This expense has no budget allocated yet. Use "Quick Allocate" or "Manage Allocations" to get started.
+                        <strong>⚠ Not Allocated</strong> - This expense has no budget allocated yet. Use "Manage Allocations" to get started.
                     </div>
                     <div class="alert alert-danger" role="alert" attrs="{'invisible': [('allocation_status', '!=', 'over_allocated')]}">
                         <strong>⚠ Over-Allocated!</strong> This expense has been over-allocated. Please review and adjust allocations.
                     </div>
 
-                    <field name="can_auto_complete" invisible="1"/>
-                    <field name="available_budget_lines_count" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
                         <!-- Future: Add smart buttons -->
                     </div>

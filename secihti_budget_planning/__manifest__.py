@@ -19,8 +19,6 @@
         * Partial or full allocation support
         * Simulation mode - doesn't affect real budgets
         * Track budget movements and allocations
-        * Smart auto-complete: One-click to complete expenses to 100%
-        * Quick allocation wizard with budget suggestions
         * Real-time warnings for over-allocation
         * Contextual alerts and visual feedback
     """,
@@ -29,7 +27,6 @@
     'depends': ['secihti_budget'],
     'data': [
         'security/ir.model.access.csv',
-        'views/sec_budget_allocation_wizard_views.xml',
         'views/sec_budget_simulation_views.xml',
         'views/sec_planned_expense_views.xml',
         'views/sec_menus.xml',

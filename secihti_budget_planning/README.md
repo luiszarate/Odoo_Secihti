@@ -15,11 +15,9 @@ This module provides a graphical interface for planning and simulating how to us
 
 ### 🎯 Enhanced UX Features
 
-- **Smart Auto-Complete** ✨: One-click button to automatically complete expenses to 100% when sufficient budget is available
-- **Quick Allocation Wizard** 🚀: Visual wizard showing all available budget lines with suggestions for optimal allocation
 - **Real-time Warnings** ⚠️: Instant alerts when allocations would exceed available budget or over-allocate expenses
-- **Contextual Status Banners** 📊: Color-coded alerts showing allocation status with helpful suggestions
-- **Smart Detection**: System automatically detects which budget lines have enough remaining to complete an expense
+- **Contextual Status Banners** 📊: Color-coded alerts showing allocation status with helpful information
+- **Expense Progress Tracking** 📊: See how much is still needed to complete each expense while allocating
 
 ## Installation
 
@@ -54,40 +52,16 @@ This module provides a graphical interface for planning and simulating how to us
 
 ### Allocating Budget to Expenses
 
-#### Method 1: Auto-Complete to 100% (Fastest) ✨
-
 1. Open a planned expense
-2. If sufficient budget is available, you'll see:
-   - A green **"Complete to 100%"** button in the header
-   - An alert showing how many budget lines can complete the expense
-3. Click **"Complete to 100%"**
-4. The system will automatically:
-   - Find the best budget line (with most remaining budget)
-   - Create an allocation for the exact remaining amount
-   - Show a success notification
-
-#### Method 2: Quick Allocation Wizard 🚀
-
-1. Open a planned expense
-2. Click the **"Quick Allocate"** button
-3. The wizard shows:
-   - All available budget lines from your project
-   - How much budget is available in each line
-   - Suggested allocation amounts
-4. Enter amounts in the lines you want to use
-   - Or click **"Use Suggested Amounts"** for automatic allocation
-5. Click **"Allocate Selected"**
-
-#### Method 3: Manual Allocation (Advanced)
-
-1. Open a planned expense
-2. Go to the **Allocations** tab
-3. Create allocations by selecting:
+2. Click **"Manage Allocations"** button
+3. Go to the **Allocations** tab
+4. Create allocations by selecting:
    - **Activity**: The activity containing the budget
    - **Budget Line (Rubro)**: The specific rubro to allocate from
    - **Amount**: How much to allocate from this rubro
 
 The system will show:
+- **Expense Progress**: Total cost, already allocated, and still needs amounts
 - **Real Remaining**: The actual remaining budget in the budget line
 - **Simulated Remaining**: What the remaining would be after this allocation
 - **⚠️ Warnings**: If your amount would exceed available budget or over-allocate the expense
