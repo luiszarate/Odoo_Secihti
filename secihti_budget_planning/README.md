@@ -80,22 +80,24 @@ The system provides helpful warnings:
 - **Perfect Allocation!**: Appears when allocation completes expense to exactly 100%
   - Shown as a success message
 
-### Viewing the Planning Interface
+### Viewing Budget Impact
+
+The module provides a clear view of how budget allocations affect your rubros:
 
 1. Open a simulation
-2. Click **Open Planning View** button
-3. Use the kanban view to see planned expenses like post-its
-4. Color-coded badges show allocation status:
-   - **Green**: Fully allocated
-   - **Yellow**: Partially allocated
-   - **Red**: Not allocated or over-allocated
+2. Go to the **"Rubros Después de Simulación"** tab
+3. See a table showing:
+   - Activity and Rubro name
+   - Total Budget and Real Remaining
+   - Allocated in this Simulation
+   - Simulated Remaining (color-coded: green=positive, yellow=zero, red=negative)
 
 ## Data Models
 
 ### sec.budget.simulation
 - Container for a planning scenario
 - Tracks total planned, allocated, and unallocated amounts
-- States: Draft, Active, Archived
+- Links to project and optional stage filter
 
 ### sec.planned.expense
 - Represents a planned expense (the "post-its")

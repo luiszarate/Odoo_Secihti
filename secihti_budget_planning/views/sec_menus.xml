@@ -14,13 +14,6 @@
               action="action_sec_budget_simulation"
               sequence="10"/>
 
-    <!-- Submenu: Planned Expenses -->
-    <menuitem id="menu_sec_planned_expenses"
-              name="Gastos Planificados"
-              parent="menu_sec_budget_planning_root"
-              action="action_sec_planned_expense"
-              sequence="20"/>
-
     <!-- Submenu: Budget Allocations -->
     <menuitem id="menu_sec_budget_allocations"
               name="Asignaciones de Presupuesto"
