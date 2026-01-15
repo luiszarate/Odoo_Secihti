@@ -551,6 +551,11 @@ class SecActivityBudgetLine(models.Model):
     project_id = fields.Many2one(related="activity_id.project_id", store=True, readonly=True)
     stage_id = fields.Many2one(related="activity_id.stage_id", store=True, readonly=True)
     rubro_id = fields.Many2one("sec.rubro", required=True)
+    planned_rubro_id = fields.Many2one(
+        "sec.rubro",
+        string="Rubro Planeado",
+        help="Rubro que podría ser utilizado para este gasto (solo informativo, no afecta cálculos)",
+    )
     tipo_gasto = fields.Selection(related="rubro_id.tipo_gasto", store=True)
     currency_id = fields.Many2one(related="project_id.currency_id", store=True, readonly=True)
 
