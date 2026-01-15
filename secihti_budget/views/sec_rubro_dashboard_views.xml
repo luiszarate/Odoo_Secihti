@@ -59,7 +59,7 @@
         <field name="name">sec.rubro.dashboard.graph</field>
         <field name="model">sec.rubro.dashboard</field>
         <field name="arch" type="xml">
-            <graph string="Dashboard de Rubros" type="bar" stacked="True">
+            <graph string="Dashboard de Rubros" type="bar" stacked="true">
                 <field name="rubro_name"/>
                 <field name="amount_programa" type="measure"/>
                 <field name="amount_concurrente" type="measure"/>
