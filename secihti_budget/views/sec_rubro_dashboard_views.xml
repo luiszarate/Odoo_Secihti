@@ -5,7 +5,7 @@
         <field name="name">sec.rubro.dashboard.tree</field>
         <field name="model">sec.rubro.dashboard</field>
         <field name="arch" type="xml">
-            <tree create="false" edit="false" delete="false" decoration-danger="pct_exec_total &gt; 100" decoration-warning="pct_exec_total &gt; 90 and pct_exec_total &lt;= 100">
+            <tree create="false" edit="false" delete="false" decoration-danger="pct_exec_total &gt; 1.0" decoration-warning="pct_exec_total &gt; 0.9 and pct_exec_total &lt;= 1.0">
                 <field name="stage_name" string="Etapa"/>
                 <field name="rubro_name" string="Rubro"/>
 
@@ -83,9 +83,9 @@
                 <filter name="group_by_rubro" string="Por Rubro" context="{'group_by': 'rubro_name'}"/>
                 <filter name="group_by_project" string="Por Proyecto" context="{'group_by': 'project_id'}"/>
 
-                <filter name="filter_overbudget" string="Sobregastados" domain="[('pct_exec_total', '&gt;', 100)]"/>
-                <filter name="filter_warning" string="Cerca del límite (90-100%)" domain="[('pct_exec_total', '&gt;', 90), ('pct_exec_total', '&lt;=', 100)]"/>
-                <filter name="filter_ok" string="Normal (&lt;90%)" domain="[('pct_exec_total', '&lt;=', 90)]"/>
+                <filter name="filter_overbudget" string="Sobregastados" domain="[('pct_exec_total', '&gt;', 1.0)]"/>
+                <filter name="filter_warning" string="Cerca del límite (90-100%)" domain="[('pct_exec_total', '&gt;', 0.9), ('pct_exec_total', '&lt;=', 1.0)]"/>
+                <filter name="filter_ok" string="Normal (&lt;90%)" domain="[('pct_exec_total', '&lt;=', 0.9)]"/>
             </search>
         </field>
     </record>

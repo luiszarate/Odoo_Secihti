@@ -111,20 +111,20 @@ class SecRubroDashboard(models.Model):
                     COALESCE(SUM(bl.amount_concurrente), 0) - COALESCE(SUM(bl.exec_concurrente), 0) AS rem_concurrente,
                     COALESCE(SUM(bl.amount_total), 0) - COALESCE(SUM(bl.exec_total), 0) AS rem_total,
 
-                    -- Porcentajes de ejecución
+                    -- Porcentajes de ejecución (valores decimales, el widget percentage los multiplica por 100)
                     CASE
                         WHEN COALESCE(SUM(bl.amount_programa), 0) > 0
-                        THEN (COALESCE(SUM(bl.exec_programa), 0) / SUM(bl.amount_programa)) * 100
+                        THEN COALESCE(SUM(bl.exec_programa), 0) / SUM(bl.amount_programa)
                         ELSE 0
                     END AS pct_exec_programa,
                     CASE
                         WHEN COALESCE(SUM(bl.amount_concurrente), 0) > 0
-                        THEN (COALESCE(SUM(bl.exec_concurrente), 0) / SUM(bl.amount_concurrente)) * 100
+                        THEN COALESCE(SUM(bl.exec_concurrente), 0) / SUM(bl.amount_concurrente)
                         ELSE 0
                     END AS pct_exec_concurrente,
                     CASE
                         WHEN COALESCE(SUM(bl.amount_total), 0) > 0
-                        THEN (COALESCE(SUM(bl.exec_total), 0) / SUM(bl.amount_total)) * 100
+                        THEN COALESCE(SUM(bl.exec_total), 0) / SUM(bl.amount_total)
                         ELSE 0
                     END AS pct_exec_total
 
