@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import csv
+import base64
+from io import StringIO
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 from odoo.tools import float_is_zero
 from odoo.tools.misc import formatLang
 
@@ -423,3 +426,145 @@ class SecBudgetTransfer(models.Model):
             )
 
         return super().unlink()
+
+    def action_export_transfer_csv(self):
+        """
+        Export selected transfers to CSV file grouped by rubro.
+        Groups all transfers by rubro regardless of activity and calculates:
+        - Authorized amounts (70% PP F003, 30% Concurrent)
+        - Requested modifications (70% PP F003, 30% Concurrent)
+        - Updated amounts (70% PP F003, 30% Concurrent)
+        """
+        if not self:
+            raise UserError(_("Debe seleccionar al menos una transferencia para exportar."))
+
+        # Get all stages involved in the selected transfers
+        stages = self.mapped('stage_id')
+        if len(stages) > 1:
+            raise UserError(
+                _("Solo puede exportar transferencias de una misma etapa. "
+                  "Las transferencias seleccionadas pertenecen a múltiples etapas.")
+            )
+
+        stage = stages[0]
+
+        # Collect all rubros involved (both from source and destination lines)
+        rubros_data = {}
+
+        # Get all budget lines in this stage to calculate authorized amounts
+        all_stage_lines = self.env['sec.activity.budget.line'].search([
+            ('stage_id', '=', stage.id)
+        ])
+
+        # Group stage lines by rubro to get authorized amounts
+        for line in all_stage_lines:
+            rubro_id = line.rubro_id.id
+            if rubro_id not in rubros_data:
+                rubros_data[rubro_id] = {
+                    'rubro_name': line.rubro_id.name,
+                    'etapa': stage.name,
+                    'authorized_programa': 0.0,
+                    'authorized_concurrente': 0.0,
+                    'modification_programa': 0.0,
+                    'modification_concurrente': 0.0,
+                }
+
+            # Sum authorized amounts (current budget)
+            rubros_data[rubro_id]['authorized_programa'] += line.amount_programa or 0.0
+            rubros_data[rubro_id]['authorized_concurrente'] += line.amount_concurrente or 0.0
+
+        # Process selected transfers to calculate modifications per rubro
+        for transfer in self:
+            # Source rubro (losing budget)
+            rubro_from_id = transfer.line_from_id.rubro_id.id
+            if rubro_from_id in rubros_data:
+                rubros_data[rubro_from_id]['modification_programa'] -= transfer.amount_programa or 0.0
+                rubros_data[rubro_from_id]['modification_concurrente'] -= transfer.amount_concurrente or 0.0
+
+            # Destination rubro (receiving budget)
+            rubro_to_id = transfer.line_to_id.rubro_id.id
+            if rubro_to_id not in rubros_data:
+                rubros_data[rubro_to_id] = {
+                    'rubro_name': transfer.line_to_id.rubro_id.name,
+                    'etapa': stage.name,
+                    'authorized_programa': 0.0,
+                    'authorized_concurrente': 0.0,
+                    'modification_programa': 0.0,
+                    'modification_concurrente': 0.0,
+                }
+
+            rubros_data[rubro_to_id]['modification_programa'] += transfer.amount_programa or 0.0
+            rubros_data[rubro_to_id]['modification_concurrente'] += transfer.amount_concurrente or 0.0
+
+        # Create CSV file
+        output = StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+
+        # Write header (using 70% for PP F003 and 30% for Concurrent as requested)
+        headers = [
+            'Rubro',
+            'Movimiento',
+            'Etapa',
+            'Monto autorizado PP F003',
+            'Monto Autorizado Concurrente',
+            'Modificacion Solicitada PP F003',
+            'Modificacion Solicitada Concurrente',
+            'Monto Actualizado PP F003',
+            'Monto Actualizado Concurrente',
+        ]
+        writer.writerow(headers)
+
+        # Write data rows - only include rubros with modifications
+        for rubro_id, data in sorted(rubros_data.items(), key=lambda x: x[1]['rubro_name']):
+            # Only include rubros that have modifications
+            if float_is_zero(data['modification_programa'], precision_digits=2) and \
+               float_is_zero(data['modification_concurrente'], precision_digits=2):
+                continue
+
+            # Calculate 70/30 split for authorized amounts
+            authorized_total = data['authorized_programa'] + data['authorized_concurrente']
+            authorized_ppf003 = authorized_total * 0.70
+            authorized_concurrent = authorized_total * 0.30
+
+            # Calculate 70/30 split for modifications
+            modification_total = data['modification_programa'] + data['modification_concurrente']
+            modification_ppf003 = modification_total * 0.70
+            modification_concurrent = modification_total * 0.30
+
+            # Calculate 70/30 split for updated amounts
+            updated_total = authorized_total + modification_total
+            updated_ppf003 = updated_total * 0.70
+            updated_concurrent = updated_total * 0.30
+
+            row = [
+                data['rubro_name'],
+                'Modificacion',
+                data['etapa'],
+                f"{authorized_ppf003:.2f}",
+                f"{authorized_concurrent:.2f}",
+                f"{modification_ppf003:.2f}",
+                f"{modification_concurrent:.2f}",
+                f"{updated_ppf003:.2f}",
+                f"{updated_concurrent:.2f}",
+            ]
+            writer.writerow(row)
+
+        # Get CSV content
+        csv_content = output.getvalue()
+        output.close()
+
+        # Create attachment
+        filename = f"transferencias_{stage.name}_{fields.Date.today()}.csv"
+        attachment = self.env['ir.attachment'].create({
+            'name': filename,
+            'type': 'binary',
+            'datas': base64.b64encode(csv_content.encode('utf-8-sig')),
+            'mimetype': 'text/csv',
+        })
+
+        # Return download action
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'self',
+        }
