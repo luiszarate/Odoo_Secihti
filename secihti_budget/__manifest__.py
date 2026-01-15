@@ -19,6 +19,7 @@
         "views/sec_activity_views.xml",
         "views/sec_budget_transfer_views.xml",
         "views/sec_rubro_views.xml",
+        "views/sec_rubro_dashboard_views.xml",
         "views/purchase_order_views.xml",
         "views/import_activity_wizard_views.xml",
         "views/export_report_wizard_views.xml",

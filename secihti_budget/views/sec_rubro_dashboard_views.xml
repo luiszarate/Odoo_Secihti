@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista Tree del Dashboard de Rubros -->
+    <record id="view_sec_rubro_dashboard_tree" model="ir.ui.view">
+        <field name="name">sec.rubro.dashboard.tree</field>
+        <field name="model">sec.rubro.dashboard</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false" decoration-danger="pct_exec_total &gt; 100" decoration-warning="pct_exec_total &gt; 90 and pct_exec_total &lt;= 100">
+                <field name="stage_name" string="Etapa"/>
+                <field name="rubro_name" string="Rubro"/>
+
+                <!-- Presupuesto -->
+                <field name="amount_programa" string="Presup. Programa (70%)" sum="Total Programa" widget="monetary"/>
+                <field name="amount_concurrente" string="Presup. Concurrente (30%)" sum="Total Concurrente" widget="monetary"/>
+                <field name="amount_total" string="Presup. Total" sum="Total" widget="monetary"/>
+
+                <!-- Ejecutado -->
+                <field name="exec_programa" string="Gasto Programa (70%)" sum="Total Gasto Programa" widget="monetary"/>
+                <field name="exec_concurrente" string="Gasto Concurrente (30%)" sum="Total Gasto Concurrente" widget="monetary"/>
+                <field name="exec_total" string="Gasto Total" sum="Total Gasto" widget="monetary"/>
+
+                <!-- Disponible -->
+                <field name="rem_programa" string="Disp. Programa" sum="Total Disponible Programa" widget="monetary"/>
+                <field name="rem_concurrente" string="Disp. Concurrente" sum="Total Disponible Concurrente" widget="monetary"/>
+                <field name="rem_total" string="Disp. Total" sum="Total Disponible" widget="monetary"/>
+
+                <!-- Porcentajes -->
+                <field name="pct_exec_programa" string="% Ejec. Programa" widget="percentage"/>
+                <field name="pct_exec_concurrente" string="% Ejec. Concurrente" widget="percentage"/>
+                <field name="pct_exec_total" string="% Ejecución Total" widget="percentage"/>
+
+                <!-- Campos ocultos para filtros -->
+                <field name="stage_id" invisible="1"/>
+                <field name="rubro_id" invisible="1"/>
+                <field name="project_id" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vista Pivot del Dashboard de Rubros -->
+    <record id="view_sec_rubro_dashboard_pivot" model="ir.ui.view">
+        <field name="name">sec.rubro.dashboard.pivot</field>
+        <field name="model">sec.rubro.dashboard</field>
+        <field name="arch" type="xml">
+            <pivot string="Dashboard de Rubros">
+                <field name="stage_name" type="row"/>
+                <field name="rubro_name" type="row"/>
+                <field name="amount_total" type="measure"/>
+                <field name="exec_total" type="measure"/>
+                <field name="rem_total" type="measure"/>
+                <field name="pct_exec_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Vista Graph del Dashboard de Rubros -->
+    <record id="view_sec_rubro_dashboard_graph" model="ir.ui.view">
+        <field name="name">sec.rubro.dashboard.graph</field>
+        <field name="model">sec.rubro.dashboard</field>
+        <field name="arch" type="xml">
+            <graph string="Dashboard de Rubros" type="bar" stacked="True">
+                <field name="rubro_name"/>
+                <field name="amount_programa" type="measure"/>
+                <field name="amount_concurrente" type="measure"/>
+                <field name="exec_programa" type="measure"/>
+                <field name="exec_concurrente" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Vista Search del Dashboard de Rubros -->
+    <record id="view_sec_rubro_dashboard_search" model="ir.ui.view">
+        <field name="name">sec.rubro.dashboard.search</field>
+        <field name="model">sec.rubro.dashboard</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="stage_name"/>
+                <field name="rubro_name"/>
+                <field name="project_id"/>
+
+                <filter name="group_by_stage" string="Por Etapa" context="{'group_by': 'stage_name'}"/>
+                <filter name="group_by_rubro" string="Por Rubro" context="{'group_by': 'rubro_name'}"/>
+                <filter name="group_by_project" string="Por Proyecto" context="{'group_by': 'project_id'}"/>
+
+                <filter name="filter_overbudget" string="Sobregastados" domain="[('pct_exec_total', '&gt;', 100)]"/>
+                <filter name="filter_warning" string="Cerca del límite (90-100%)" domain="[('pct_exec_total', '&gt;', 90), ('pct_exec_total', '&lt;=', 100)]"/>
+                <filter name="filter_ok" string="Normal (&lt;90%)" domain="[('pct_exec_total', '&lt;=', 90)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción para el Dashboard de Rubros -->
+    <record id="action_sec_rubro_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard de Rubros</field>
+        <field name="res_model">sec.rubro.dashboard</field>
+        <field name="view_mode">tree,pivot,graph</field>
+        <field name="view_id" ref="view_sec_rubro_dashboard_tree"/>
+        <field name="search_view_id" ref="view_sec_rubro_dashboard_search"/>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Dashboard de Rubros por Etapa
+            </p>
+            <p>
+                Aquí puedes ver el presupuesto asignado, gastado y disponible para cada rubro en cada etapa,
+                desglosado entre la parte de Programa (70%) y la parte Concurrente (30%).
+            </p>
+        </field>
+    </record>
+</odoo>
