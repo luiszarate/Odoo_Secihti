@@ -54,6 +54,7 @@
                                 <tree editable="bottom" decoration-danger="traffic_light_color == 'orange'" decoration-warning="traffic_light_color == 'yellow'">
                                     <field name="name"/>
                                     <field name="rubro_id"/>
+                                    <field name="planned_rubro_id" optional="show"/>
                                     <field name="tipo_gasto" readonly="1"/>
                                     <field name="amount_programa"/>
                                     <field name="amount_concurrente"/>
