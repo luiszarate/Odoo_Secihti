@@ -54,6 +54,8 @@
                                 <tree string="Planned Expenses" editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
+                                    <field name="purchase_order_id" options="{'no_create': True}"/>
+                                    <field name="purchase_order_total" optional="hide"/>
                                     <field name="amount" sum="Total"/>
                                     <field name="allocated_amount" sum="Total Allocated"/>
                                     <field name="remaining_amount" sum="Total Remaining"/>
