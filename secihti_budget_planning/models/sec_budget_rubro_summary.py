@@ -89,47 +89,57 @@ class SecBudgetRubroSummary(models.Model):
 
     def init(self):
         """
-        Create the SQL view that groups allocations by simulation + activity + rubro
+        Create the SQL view that shows ALL budget lines (rubros) from the project,
+        including those that weren't used in the simulation.
+
+        This gives a complete picture of how the project budget would look after
+        applying the simulation.
         """
         tools.drop_view_if_exists(self.env.cr, self._table)
 
         query = """
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
-                    -- Use ROW_NUMBER to generate unique IDs for the view
-                    ROW_NUMBER() OVER (ORDER BY a.simulation_id, a.activity_id, a.rubro_id) AS id,
-                    a.simulation_id,
-                    a.activity_id,
-                    a.rubro_id,
-                    -- Get the budget line ID (should be unique per activity+rubro)
-                    MAX(a.budget_line_id) as budget_line_id,
-                    -- Sum the allocated amounts for this rubro across all planned expenses
-                    SUM(a.amount) as amount,
-                    -- Budget line totals (these should be the same for all allocations of the same budget_line)
-                    MAX(bl.amount_total) as line_amount_total,
-                    MAX(bl.rem_total) as line_rem_total,
-                    -- Calculate simulated remaining: Real Remaining - Total Allocated in this simulation
-                    MAX(bl.rem_total) - SUM(a.amount) as simulated_remaining,
-                    -- Determine status based on simulated remaining
+                    ROW_NUMBER() OVER (ORDER BY sim.id, bl.activity_id, bl.rubro_id) AS id,
+                    sim.id as simulation_id,
+                    bl.activity_id,
+                    bl.rubro_id,
+                    bl.id as budget_line_id,
+                    bl.amount_total as line_amount_total,
+                    bl.rem_total as line_rem_total,
+                    -- Amount allocated in this simulation (0 if not used)
+                    COALESCE(alloc.total_allocated, 0) as amount,
+                    -- Simulated remaining = Real Remaining - Allocated in Simulation
+                    bl.rem_total - COALESCE(alloc.total_allocated, 0) as simulated_remaining,
+                    -- Status based on simulated remaining
                     CASE
-                        WHEN MAX(bl.rem_total) - SUM(a.amount) > 0 THEN 'positive'
-                        WHEN MAX(bl.rem_total) - SUM(a.amount) = 0 THEN 'zero'
+                        WHEN bl.rem_total - COALESCE(alloc.total_allocated, 0) > 0 THEN 'positive'
+                        WHEN bl.rem_total - COALESCE(alloc.total_allocated, 0) = 0 THEN 'zero'
                         ELSE 'negative'
                     END as simulated_remaining_status,
-                    -- Get currency and project from simulation
-                    MAX(s.currency_id) as currency_id,
-                    MAX(s.project_id) as project_id
+                    sim.currency_id,
+                    sim.project_id
                 FROM
-                    sec_budget_allocation a
-                    INNER JOIN sec_budget_simulation s ON a.simulation_id = s.id
-                    INNER JOIN sec_activity_budget_line bl ON a.budget_line_id = bl.id
+                    sec_budget_simulation sim
+                    -- Get all budget lines from the project's activities
+                    CROSS JOIN sec_activity_budget_line bl
+                    -- Left join to get allocations for this simulation (if any)
+                    LEFT JOIN (
+                        SELECT
+                            a.simulation_id,
+                            a.budget_line_id,
+                            SUM(a.amount) as total_allocated
+                        FROM sec_budget_allocation a
+                        WHERE a.budget_line_id IS NOT NULL
+                        GROUP BY a.simulation_id, a.budget_line_id
+                    ) alloc ON alloc.simulation_id = sim.id AND alloc.budget_line_id = bl.id
                 WHERE
-                    a.budget_line_id IS NOT NULL
-                    AND a.rubro_id IS NOT NULL
-                GROUP BY
-                    a.simulation_id,
-                    a.activity_id,
-                    a.rubro_id
+                    -- Only include budget lines from activities that belong to the simulation's project
+                    bl.activity_id IN (
+                        SELECT id FROM sec_activity WHERE project_id = sim.project_id
+                    )
+                    -- Only include budget lines with budget (amount_total > 0)
+                    AND bl.amount_total > 0
             )
         """ % self._table
 

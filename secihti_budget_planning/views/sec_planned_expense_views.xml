@@ -32,9 +32,6 @@
         <field name="arch" type="xml">
             <form string="Planned Expense">
                 <header>
-                    <button name="action_import_from_purchase_order" string="Import from PO" type="object"
-                            class="btn-primary" icon="fa-download"
-                            attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
                     <button name="action_view_allocations" string="Manage Allocations" type="object" class="oe_highlight" icon="fa-link"/>
                 </header>
                 <sheet>
@@ -75,15 +72,12 @@
                             <field name="is_fully_allocated" invisible="1"/>
                         </group>
                     </group>
-                    <group string="Purchase Order Integration (Optional)">
+                    <group>
                         <group>
                             <field name="purchase_order_id" options="{'no_create': True}"/>
                             <field name="purchase_order_total" attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
                         </group>
                         <group>
-                            <div class="alert alert-info" role="alert" attrs="{'invisible': [('purchase_order_id', '=', False)]}">
-                                <p><strong>💡 Tip:</strong> Click "Import from PO" button at the top to import the amount and details from this purchase order.</p>
-                            </div>
                         </group>
                     </group>
                     <group>
