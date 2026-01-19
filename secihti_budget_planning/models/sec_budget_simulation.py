@@ -53,6 +53,13 @@ class SecBudgetSimulation(models.Model):
         string='Budget Allocations'
     )
 
+    rubro_summary_ids = fields.One2many(
+        'sec.budget.rubro.summary',
+        'simulation_id',
+        string='Rubro Summary (Grouped)',
+        help='Grouped view of budget allocations by Activity + Rubro'
+    )
+
     total_planned_amount = fields.Monetary(
         string='Total Planned',
         compute='_compute_totals',

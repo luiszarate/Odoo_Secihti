@@ -113,6 +113,22 @@ class SecPlannedExpense(models.Model):
         help='Color for kanban view (like post-it colors)'
     )
 
+    # Purchase Order Integration
+    purchase_order_id = fields.Many2one(
+        'purchase.order',
+        string='Purchase Order',
+        help='Optional: Link to a purchase order to import information',
+        ondelete='set null'
+    )
+
+    purchase_order_total = fields.Monetary(
+        string='PO Total',
+        related='purchase_order_id.amount_total',
+        readonly=True,
+        currency_field='currency_id',
+        help='Total amount from the linked purchase order'
+    )
+
     @api.depends('amount', 'allocation_ids.amount')
     def _compute_allocation_status(self):
         for expense in self:
@@ -166,3 +182,71 @@ class SecPlannedExpense(models.Model):
             },
             'target': 'current',
         }
+
+    def action_import_from_purchase_order(self):
+        """Import information from the linked purchase order"""
+        self.ensure_one()
+        if not self.purchase_order_id:
+            raise ValidationError(_('No purchase order selected. Please select a purchase order first.'))
+
+        po = self.purchase_order_id
+
+        # Build description from PO
+        description_parts = []
+        if po.name:
+            description_parts.append(_('PO: %s') % po.name)
+        if po.partner_id:
+            description_parts.append(_('Vendor: %s') % po.partner_id.name)
+
+        # Add product lines info
+        if po.order_line:
+            description_parts.append(_('Products:'))
+            for line in po.order_line[:5]:  # Limit to first 5 lines to keep it concise
+                product_info = '  - %s (Qty: %s)' % (line.product_id.name or line.name, line.product_qty)
+                description_parts.append(product_info)
+            if len(po.order_line) > 5:
+                description_parts.append(_('  ... and %s more items') % (len(po.order_line) - 5))
+
+        # Update the planned expense
+        update_vals = {
+            'amount': po.amount_total,
+        }
+
+        # Only update name if it's still the default
+        if not self.name or self.name in (_('New Expense'), _('New')):
+            update_vals['name'] = _('Purchase Order: %s') % po.name
+
+        # Update notes with PO information
+        if description_parts:
+            po_notes = '\n'.join(description_parts)
+            if self.notes:
+                update_vals['notes'] = self.notes + '\n\n' + _('=== Imported from Purchase Order ===\n') + po_notes
+            else:
+                update_vals['notes'] = po_notes
+
+        self.write(update_vals)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Information imported from Purchase Order %s. Amount: %s') % (po.name, po.amount_total),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    @api.onchange('purchase_order_id')
+    def _onchange_purchase_order_id(self):
+        """Show a helper message when a PO is selected"""
+        if self.purchase_order_id:
+            return {
+                'warning': {
+                    'title': _('Purchase Order Selected'),
+                    'message': _('Purchase Order "%s" selected (Total: %s). Click "Import from PO" to import the information.') % (
+                        self.purchase_order_id.name,
+                        self.purchase_order_id.amount_total
+                    ),
+                }
+            }

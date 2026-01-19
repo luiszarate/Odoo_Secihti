@@ -24,7 +24,7 @@
     """,
     'author': 'SECIHTI',
     'website': '',
-    'depends': ['secihti_budget'],
+    'depends': ['secihti_budget', 'purchase'],
     'data': [
         'security/ir.model.access.csv',
         'views/sec_budget_simulation_views.xml',

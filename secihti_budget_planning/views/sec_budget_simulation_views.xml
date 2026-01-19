@@ -72,10 +72,11 @@
                                 <div class="alert alert-info" role="alert">
                                     <p><strong>📊 Vista de Rubros Simulados</strong></p>
                                     <p>Esta tabla muestra cómo quedarán los rubros (budget lines) después de aplicar las asignaciones de esta simulación.</p>
+                                    <p><em>Los rubros están agrupados por Actividad + Rubro, mostrando el total acumulado de todas las asignaciones.</em></p>
                                 </div>
                             </group>
-                            <field name="allocation_ids">
-                                <tree string="Budget Lines Impact" create="false" delete="false">
+                            <field name="rubro_summary_ids">
+                                <tree string="Budget Lines Impact (Grouped)" create="false" delete="false" edit="false">
                                     <field name="activity_id"/>
                                     <field name="rubro_id"/>
                                     <field name="line_amount_total" string="Total Budget" sum="Total Budget"/>

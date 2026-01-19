@@ -10,6 +10,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="simulation_id"/>
+                <field name="purchase_order_id" optional="show"/>
                 <field name="amount" sum="Total Amount"/>
                 <field name="allocated_amount" sum="Total Allocated"/>
                 <field name="remaining_amount" sum="Total Remaining"/>
@@ -31,6 +32,9 @@
         <field name="arch" type="xml">
             <form string="Planned Expense">
                 <header>
+                    <button name="action_import_from_purchase_order" string="Import from PO" type="object"
+                            class="btn-primary" icon="fa-download"
+                            attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
                     <button name="action_view_allocations" string="Manage Allocations" type="object" class="oe_highlight" icon="fa-link"/>
                 </header>
                 <sheet>
@@ -69,6 +73,17 @@
                                    decoration-warning="allocation_status == 'partially_allocated'"
                                    decoration-danger="allocation_status in ('not_allocated', 'over_allocated')"/>
                             <field name="is_fully_allocated" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Purchase Order Integration (Optional)">
+                        <group>
+                            <field name="purchase_order_id" options="{'no_create': True}"/>
+                            <field name="purchase_order_total" attrs="{'invisible': [('purchase_order_id', '=', False)]}"/>
+                        </group>
+                        <group>
+                            <div class="alert alert-info" role="alert" attrs="{'invisible': [('purchase_order_id', '=', False)]}">
+                                <p><strong>💡 Tip:</strong> Click "Import from PO" button at the top to import the amount and details from this purchase order.</p>
+                            </div>
                         </group>
                     </group>
                     <group>
