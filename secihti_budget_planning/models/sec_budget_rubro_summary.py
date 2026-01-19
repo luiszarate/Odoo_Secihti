@@ -89,10 +89,12 @@ class SecBudgetRubroSummary(models.Model):
 
     def init(self):
         """
-        Create the SQL view that shows ALL budget lines (rubros) from the project,
-        including those that weren't used in the simulation.
+        Create the SQL view that shows budget lines (rubros) from the simulation's stage.
 
-        This gives a complete picture of how the project budget would look after
+        If the simulation has a stage_id defined, only shows rubros from activities
+        in that stage. Otherwise, shows all rubros from the project.
+
+        This gives a complete picture of how the budget would look after
         applying the simulation.
         """
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -124,6 +126,7 @@ class SecBudgetRubroSummary(models.Model):
                     INNER JOIN sec_project proj ON sim.project_id = proj.id
                     -- Get all budget lines from the project's activities
                     CROSS JOIN sec_activity_budget_line bl
+                    INNER JOIN sec_activity act ON bl.activity_id = act.id
                     -- Left join to get allocations for this simulation (if any)
                     LEFT JOIN (
                         SELECT
@@ -136,9 +139,9 @@ class SecBudgetRubroSummary(models.Model):
                     ) alloc ON alloc.simulation_id = sim.id AND alloc.budget_line_id = bl.id
                 WHERE
                     -- Only include budget lines from activities that belong to the simulation's project
-                    bl.activity_id IN (
-                        SELECT id FROM sec_activity WHERE project_id = sim.project_id
-                    )
+                    act.project_id = sim.project_id
+                    -- Filter by stage if the simulation has a stage defined
+                    AND (sim.stage_id IS NULL OR act.stage_id = sim.stage_id)
                     -- Only include budget lines with budget (amount_total > 0)
                     AND bl.amount_total > 0
             )
