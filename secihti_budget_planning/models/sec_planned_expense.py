@@ -123,10 +123,10 @@ class SecPlannedExpense(models.Model):
 
     purchase_order_total = fields.Monetary(
         string='PO Total',
-        related='purchase_order_id.amount_total',
+        related='purchase_order_id.total_mxn_manual',
         readonly=True,
         currency_field='currency_id',
-        help='Total amount from the linked purchase order'
+        help='Total amount from the linked purchase order (in MXN)'
     )
 
     @api.depends('amount', 'allocation_ids.amount')
@@ -205,8 +205,8 @@ class SecPlannedExpense(models.Model):
                 if len(po.order_line) > 5:
                     description_parts.append(_('  ... and %s more items') % (len(po.order_line) - 5))
 
-            # Update amount
-            self.amount = po.amount_total
+            # Update amount - use total_mxn_manual to handle currency conversions
+            self.amount = po.total_mxn_manual
 
             # Only update name if it's empty or still the default
             if not self.name or self.name in (_('New Expense'), _('New')):
