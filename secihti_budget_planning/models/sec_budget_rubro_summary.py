@@ -117,10 +117,11 @@ class SecBudgetRubroSummary(models.Model):
                         WHEN bl.rem_total - COALESCE(alloc.total_allocated, 0) = 0 THEN 'zero'
                         ELSE 'negative'
                     END as simulated_remaining_status,
-                    sim.currency_id,
+                    proj.currency_id,
                     sim.project_id
                 FROM
                     sec_budget_simulation sim
+                    INNER JOIN sec_project proj ON sim.project_id = proj.id
                     -- Get all budget lines from the project's activities
                     CROSS JOIN sec_activity_budget_line bl
                     -- Left join to get allocations for this simulation (if any)
