@@ -581,6 +581,9 @@ class SecBudgetTransfer(models.Model):
         - Budget by activity and rubro
         - Total amounts per rubro (sum across all activities)
         - State before and after each transfer
+
+        The state is calculated by starting from the current state and reversing transfers
+        from most recent to oldest, then displaying them in chronological order.
         """
         if not self:
             raise UserError(_("Debe seleccionar al menos una transferencia para exportar."))
@@ -598,6 +601,72 @@ class SecBudgetTransfer(models.Model):
 
         stage = stages[0]
         currency = self[0].currency_id or self.env.company.currency_id
+
+        # Get all budget lines in this stage to track state
+        all_stage_lines = self.env['sec.activity.budget.line'].search([
+            ('stage_id', '=', stage.id)
+        ])
+
+        # Build current state (after all transfers have been applied)
+        # Key: (activity_id, rubro_id), Value: {programa, concurrente, total}
+        current_state = {}
+        for line in all_stage_lines:
+            key = (line.activity_id.id, line.rubro_id.id)
+            current_state[key] = {
+                'line_id': line.id,
+                'activity_name': line.activity_id.name,
+                'rubro_id': line.rubro_id.id,
+                'rubro_name': line.rubro_id.name,
+                'programa': line.amount_programa or 0.0,
+                'concurrente': line.amount_concurrente or 0.0,
+                'total': line.amount_total or 0.0,
+            }
+
+        # Sort transfers from most recent to oldest for state reconstruction
+        transfers_desc = self.sorted(key=lambda t: (t.date, t.id), reverse=True)
+
+        # Dictionary to store the before/after state for each transfer
+        # {transfer_id: {'before': state_dict, 'after': state_dict}}
+        transfer_history = {}
+
+        # Process transfers from most recent to oldest, reversing each one
+        working_state = {}
+        for key, data in current_state.items():
+            working_state[key] = data.copy()
+
+        for transfer in transfers_desc:
+            # The "after" state for this transfer is the current working_state
+            after_state = {}
+            for key, data in working_state.items():
+                after_state[key] = data.copy()
+
+            # Now reverse this transfer in the working_state
+            line_from = transfer.line_from_id
+            line_to = transfer.line_to_id
+
+            key_from = (line_from.activity_id.id, line_from.rubro_id.id)
+            key_to = (line_to.activity_id.id, line_to.rubro_id.id)
+
+            # Reverse the transfer: add back to origin, subtract from destination
+            if key_from in working_state:
+                working_state[key_from]['programa'] += transfer.amount_programa or 0.0
+                working_state[key_from]['concurrente'] += transfer.amount_concurrente or 0.0
+                working_state[key_from]['total'] = working_state[key_from]['programa'] + working_state[key_from]['concurrente']
+
+            if key_to in working_state:
+                working_state[key_to]['programa'] -= transfer.amount_programa or 0.0
+                working_state[key_to]['concurrente'] -= transfer.amount_concurrente or 0.0
+                working_state[key_to]['total'] = working_state[key_to]['programa'] + working_state[key_to]['concurrente']
+
+            # The "before" state for this transfer is the new working_state
+            before_state = {}
+            for key, data in working_state.items():
+                before_state[key] = data.copy()
+
+            transfer_history[transfer.id] = {
+                'before': before_state,
+                'after': after_state,
+            }
 
         # Create Excel file
         output = BytesIO()
@@ -665,8 +734,12 @@ class SecBudgetTransfer(models.Model):
             f'Historial de Transferencias - Etapa: {stage.name}', title_format)
         row += 2
 
-        # Process each transfer
-        for transfer in self.sorted(key=lambda t: t.date):
+        # Now display transfers in chronological order (oldest to newest)
+        for transfer in self.sorted(key=lambda t: (t.date, t.id)):
+            history = transfer_history[transfer.id]
+            before_state = history['before']
+            after_state = history['after']
+
             # Transfer header
             worksheet.merge_range(row, 0, row, 7,
                 f'Transferencia: {transfer.name} - Fecha: {transfer.date} - '
@@ -695,33 +768,13 @@ class SecBudgetTransfer(models.Model):
                 worksheet.write(row, col, header, header_format)
             row += 1
 
-            # Calculate before state (reverse the transfer)
             line_from = transfer.line_from_id
             line_to = transfer.line_to_id
-
-            # Before state for origin line
-            before_from_programa = (line_from.amount_programa or 0.0) + (transfer.amount_programa or 0.0)
-            before_from_concurrente = (line_from.amount_concurrente or 0.0) + (transfer.amount_concurrente or 0.0)
-            before_from_total = before_from_programa + before_from_concurrente
-
-            # After state for origin line (current state)
-            after_from_programa = line_from.amount_programa or 0.0
-            after_from_concurrente = line_from.amount_concurrente or 0.0
-            after_from_total = after_from_programa + after_from_concurrente
-
-            # Before state for destination line
-            before_to_programa = (line_to.amount_programa or 0.0) - (transfer.amount_programa or 0.0)
-            before_to_concurrente = (line_to.amount_concurrente or 0.0) - (transfer.amount_concurrente or 0.0)
-            before_to_total = before_to_programa + before_to_concurrente
-
-            # After state for destination line (current state)
-            after_to_programa = line_to.amount_programa or 0.0
-            after_to_concurrente = line_to.amount_concurrente or 0.0
-            after_to_total = after_to_programa + after_to_concurrente
-
-            # Get all lines for these rubros to calculate totals
             rubro_from = line_from.rubro_id
             rubro_to = line_to.rubro_id
+
+            key_from = (line_from.activity_id.id, rubro_from.id)
+            key_to = (line_to.activity_id.id, rubro_to.id)
 
             # RUBRO ORIGEN
             worksheet.write(row, 0, rubro_from.name, subheader_format)
@@ -729,36 +782,38 @@ class SecBudgetTransfer(models.Model):
             row += 1
 
             # Origin activity line
+            before_from = before_state.get(key_from, {'programa': 0.0, 'concurrente': 0.0, 'total': 0.0})
+            after_from = after_state.get(key_from, {'programa': 0.0, 'concurrente': 0.0, 'total': 0.0})
+
             worksheet.write(row, 0, f'  {line_from.activity_id.name}', cell_format)
             worksheet.write(row, 1, 'Actividad', cell_format)
-            worksheet.write(row, 2, before_from_programa, number_format)
-            worksheet.write(row, 3, before_from_concurrente, number_format)
-            worksheet.write(row, 4, before_from_total, number_format)
-            worksheet.write(row, 5, after_from_programa, number_format)
-            worksheet.write(row, 6, after_from_concurrente, number_format)
-            worksheet.write(row, 7, after_from_total, number_format)
+            worksheet.write(row, 2, before_from['programa'], number_format)
+            worksheet.write(row, 3, before_from['concurrente'], number_format)
+            worksheet.write(row, 4, before_from['total'], number_format)
+            worksheet.write(row, 5, after_from['programa'], number_format)
+            worksheet.write(row, 6, after_from['concurrente'], number_format)
+            worksheet.write(row, 7, after_from['total'], number_format)
             row += 1
 
-            # Calculate rubro origin totals (all activities)
-            rubro_from_lines = self.env['sec.activity.budget.line'].search([
-                ('stage_id', '=', stage.id),
-                ('rubro_id', '=', rubro_from.id)
-            ])
-
+            # Calculate rubro origin totals (all activities in this rubro)
             before_rubro_from_programa = sum(
-                (line.amount_programa or 0.0) + (transfer.amount_programa or 0.0)
-                if line.id == line_from.id else (line.amount_programa or 0.0)
-                for line in rubro_from_lines
+                data['programa'] for key, data in before_state.items()
+                if data['rubro_id'] == rubro_from.id
             )
             before_rubro_from_concurrente = sum(
-                (line.amount_concurrente or 0.0) + (transfer.amount_concurrente or 0.0)
-                if line.id == line_from.id else (line.amount_concurrente or 0.0)
-                for line in rubro_from_lines
+                data['concurrente'] for key, data in before_state.items()
+                if data['rubro_id'] == rubro_from.id
             )
             before_rubro_from_total = before_rubro_from_programa + before_rubro_from_concurrente
 
-            after_rubro_from_programa = sum(line.amount_programa or 0.0 for line in rubro_from_lines)
-            after_rubro_from_concurrente = sum(line.amount_concurrente or 0.0 for line in rubro_from_lines)
+            after_rubro_from_programa = sum(
+                data['programa'] for key, data in after_state.items()
+                if data['rubro_id'] == rubro_from.id
+            )
+            after_rubro_from_concurrente = sum(
+                data['concurrente'] for key, data in after_state.items()
+                if data['rubro_id'] == rubro_from.id
+            )
             after_rubro_from_total = after_rubro_from_programa + after_rubro_from_concurrente
 
             # Rubro origin total
@@ -778,36 +833,38 @@ class SecBudgetTransfer(models.Model):
             row += 1
 
             # Destination activity line
+            before_to = before_state.get(key_to, {'programa': 0.0, 'concurrente': 0.0, 'total': 0.0})
+            after_to = after_state.get(key_to, {'programa': 0.0, 'concurrente': 0.0, 'total': 0.0})
+
             worksheet.write(row, 0, f'  {line_to.activity_id.name}', cell_format)
             worksheet.write(row, 1, 'Actividad', cell_format)
-            worksheet.write(row, 2, before_to_programa, number_format)
-            worksheet.write(row, 3, before_to_concurrente, number_format)
-            worksheet.write(row, 4, before_to_total, number_format)
-            worksheet.write(row, 5, after_to_programa, number_format)
-            worksheet.write(row, 6, after_to_concurrente, number_format)
-            worksheet.write(row, 7, after_to_total, number_format)
+            worksheet.write(row, 2, before_to['programa'], number_format)
+            worksheet.write(row, 3, before_to['concurrente'], number_format)
+            worksheet.write(row, 4, before_to['total'], number_format)
+            worksheet.write(row, 5, after_to['programa'], number_format)
+            worksheet.write(row, 6, after_to['concurrente'], number_format)
+            worksheet.write(row, 7, after_to['total'], number_format)
             row += 1
 
-            # Calculate rubro destination totals (all activities)
-            rubro_to_lines = self.env['sec.activity.budget.line'].search([
-                ('stage_id', '=', stage.id),
-                ('rubro_id', '=', rubro_to.id)
-            ])
-
+            # Calculate rubro destination totals (all activities in this rubro)
             before_rubro_to_programa = sum(
-                (line.amount_programa or 0.0) - (transfer.amount_programa or 0.0)
-                if line.id == line_to.id else (line.amount_programa or 0.0)
-                for line in rubro_to_lines
+                data['programa'] for key, data in before_state.items()
+                if data['rubro_id'] == rubro_to.id
             )
             before_rubro_to_concurrente = sum(
-                (line.amount_concurrente or 0.0) - (transfer.amount_concurrente or 0.0)
-                if line.id == line_to.id else (line.amount_concurrente or 0.0)
-                for line in rubro_to_lines
+                data['concurrente'] for key, data in before_state.items()
+                if data['rubro_id'] == rubro_to.id
             )
             before_rubro_to_total = before_rubro_to_programa + before_rubro_to_concurrente
 
-            after_rubro_to_programa = sum(line.amount_programa or 0.0 for line in rubro_to_lines)
-            after_rubro_to_concurrente = sum(line.amount_concurrente or 0.0 for line in rubro_to_lines)
+            after_rubro_to_programa = sum(
+                data['programa'] for key, data in after_state.items()
+                if data['rubro_id'] == rubro_to.id
+            )
+            after_rubro_to_concurrente = sum(
+                data['concurrente'] for key, data in after_state.items()
+                if data['rubro_id'] == rubro_to.id
+            )
             after_rubro_to_total = after_rubro_to_programa + after_rubro_to_concurrente
 
             # Rubro destination total
