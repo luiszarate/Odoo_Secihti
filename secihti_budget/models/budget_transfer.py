@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import csv
 import base64
-from io import StringIO
+from io import StringIO, BytesIO
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
 from odoo.tools import float_is_zero
 from odoo.tools.misc import formatLang
+
+try:
+    import xlsxwriter
+except ImportError:
+    xlsxwriter = None
 
 
 class SecBudgetTransfer(models.Model):
@@ -561,6 +566,273 @@ class SecBudgetTransfer(models.Model):
             'datas': base64.b64encode(csv_content.encode('utf-8-sig')),
             'mimetype': 'text/csv',
         })
+
+        # Return download action
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'self',
+        }
+
+    def action_export_transfers_history(self):
+        """
+        Export detailed history of selected transfers showing budget state before and after.
+        Shows:
+        - Budget by activity and rubro
+        - Total amounts per rubro (sum across all activities)
+        - State before and after each transfer
+        """
+        if not self:
+            raise UserError(_("Debe seleccionar al menos una transferencia para exportar."))
+
+        if not xlsxwriter:
+            raise UserError(_("La biblioteca xlsxwriter no está instalada. Por favor instálela para usar esta funcionalidad."))
+
+        # Get all stages involved in the selected transfers
+        stages = self.mapped('stage_id')
+        if len(stages) > 1:
+            raise UserError(
+                _("Solo puede exportar transferencias de una misma etapa. "
+                  "Las transferencias seleccionadas pertenecen a múltiples etapas.")
+            )
+
+        stage = stages[0]
+        currency = self[0].currency_id or self.env.company.currency_id
+
+        # Create Excel file
+        output = BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        worksheet = workbook.add_worksheet('Historial de Transferencias')
+
+        # Define formats
+        title_format = workbook.add_format({
+            'bold': True,
+            'font_size': 14,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#4472C4',
+            'font_color': 'white',
+            'border': 1
+        })
+
+        header_format = workbook.add_format({
+            'bold': True,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#D9E1F2',
+            'border': 1,
+            'text_wrap': True
+        })
+
+        subheader_format = workbook.add_format({
+            'bold': True,
+            'align': 'left',
+            'valign': 'vcenter',
+            'bg_color': '#E7E6E6',
+            'border': 1
+        })
+
+        cell_format = workbook.add_format({
+            'align': 'left',
+            'valign': 'vcenter',
+            'border': 1
+        })
+
+        number_format = workbook.add_format({
+            'align': 'right',
+            'valign': 'vcenter',
+            'border': 1,
+            'num_format': '#,##0.00'
+        })
+
+        total_format = workbook.add_format({
+            'bold': True,
+            'align': 'right',
+            'valign': 'vcenter',
+            'bg_color': '#FFF2CC',
+            'border': 1,
+            'num_format': '#,##0.00'
+        })
+
+        # Set column widths
+        worksheet.set_column('A:A', 30)  # Rubro/Actividad
+        worksheet.set_column('B:B', 25)  # Info adicional
+        worksheet.set_column('C:H', 18)  # Numeric columns
+
+        # Write title
+        row = 0
+        worksheet.merge_range(row, 0, row, 7,
+            f'Historial de Transferencias - Etapa: {stage.name}', title_format)
+        row += 2
+
+        # Process each transfer
+        for transfer in self.sorted(key=lambda t: t.date):
+            # Transfer header
+            worksheet.merge_range(row, 0, row, 7,
+                f'Transferencia: {transfer.name} - Fecha: {transfer.date} - '
+                f'Monto: {formatLang(self.env, transfer.amount or 0.0, currency_obj=currency)}',
+                subheader_format)
+            row += 1
+
+            if transfer.justification:
+                worksheet.merge_range(row, 0, row, 7,
+                    f'Justificación: {transfer.justification}',
+                    cell_format)
+                row += 1
+
+            # Column headers
+            headers = [
+                'Rubro / Actividad',
+                'Tipo',
+                'Programa (Antes)',
+                'Concurrente (Antes)',
+                'Total (Antes)',
+                'Programa (Después)',
+                'Concurrente (Después)',
+                'Total (Después)'
+            ]
+            for col, header in enumerate(headers):
+                worksheet.write(row, col, header, header_format)
+            row += 1
+
+            # Calculate before state (reverse the transfer)
+            line_from = transfer.line_from_id
+            line_to = transfer.line_to_id
+
+            # Before state for origin line
+            before_from_programa = (line_from.amount_programa or 0.0) + (transfer.amount_programa or 0.0)
+            before_from_concurrente = (line_from.amount_concurrente or 0.0) + (transfer.amount_concurrente or 0.0)
+            before_from_total = before_from_programa + before_from_concurrente
+
+            # After state for origin line (current state)
+            after_from_programa = line_from.amount_programa or 0.0
+            after_from_concurrente = line_from.amount_concurrente or 0.0
+            after_from_total = after_from_programa + after_from_concurrente
+
+            # Before state for destination line
+            before_to_programa = (line_to.amount_programa or 0.0) - (transfer.amount_programa or 0.0)
+            before_to_concurrente = (line_to.amount_concurrente or 0.0) - (transfer.amount_concurrente or 0.0)
+            before_to_total = before_to_programa + before_to_concurrente
+
+            # After state for destination line (current state)
+            after_to_programa = line_to.amount_programa or 0.0
+            after_to_concurrente = line_to.amount_concurrente or 0.0
+            after_to_total = after_to_programa + after_to_concurrente
+
+            # Get all lines for these rubros to calculate totals
+            rubro_from = line_from.rubro_id
+            rubro_to = line_to.rubro_id
+
+            # RUBRO ORIGEN
+            worksheet.write(row, 0, rubro_from.name, subheader_format)
+            worksheet.write(row, 1, 'ORIGEN', subheader_format)
+            row += 1
+
+            # Origin activity line
+            worksheet.write(row, 0, f'  {line_from.activity_id.name}', cell_format)
+            worksheet.write(row, 1, 'Actividad', cell_format)
+            worksheet.write(row, 2, before_from_programa, number_format)
+            worksheet.write(row, 3, before_from_concurrente, number_format)
+            worksheet.write(row, 4, before_from_total, number_format)
+            worksheet.write(row, 5, after_from_programa, number_format)
+            worksheet.write(row, 6, after_from_concurrente, number_format)
+            worksheet.write(row, 7, after_from_total, number_format)
+            row += 1
+
+            # Calculate rubro origin totals (all activities)
+            rubro_from_lines = self.env['sec.activity.budget.line'].search([
+                ('stage_id', '=', stage.id),
+                ('rubro_id', '=', rubro_from.id)
+            ])
+
+            before_rubro_from_programa = sum(
+                (line.amount_programa or 0.0) + (transfer.amount_programa or 0.0)
+                if line.id == line_from.id else (line.amount_programa or 0.0)
+                for line in rubro_from_lines
+            )
+            before_rubro_from_concurrente = sum(
+                (line.amount_concurrente or 0.0) + (transfer.amount_concurrente or 0.0)
+                if line.id == line_from.id else (line.amount_concurrente or 0.0)
+                for line in rubro_from_lines
+            )
+            before_rubro_from_total = before_rubro_from_programa + before_rubro_from_concurrente
+
+            after_rubro_from_programa = sum(line.amount_programa or 0.0 for line in rubro_from_lines)
+            after_rubro_from_concurrente = sum(line.amount_concurrente or 0.0 for line in rubro_from_lines)
+            after_rubro_from_total = after_rubro_from_programa + after_rubro_from_concurrente
+
+            # Rubro origin total
+            worksheet.write(row, 0, f'  Total {rubro_from.name}', subheader_format)
+            worksheet.write(row, 1, 'Total Rubro', subheader_format)
+            worksheet.write(row, 2, before_rubro_from_programa, total_format)
+            worksheet.write(row, 3, before_rubro_from_concurrente, total_format)
+            worksheet.write(row, 4, before_rubro_from_total, total_format)
+            worksheet.write(row, 5, after_rubro_from_programa, total_format)
+            worksheet.write(row, 6, after_rubro_from_concurrente, total_format)
+            worksheet.write(row, 7, after_rubro_from_total, total_format)
+            row += 1
+
+            # RUBRO DESTINO
+            worksheet.write(row, 0, rubro_to.name, subheader_format)
+            worksheet.write(row, 1, 'DESTINO', subheader_format)
+            row += 1
+
+            # Destination activity line
+            worksheet.write(row, 0, f'  {line_to.activity_id.name}', cell_format)
+            worksheet.write(row, 1, 'Actividad', cell_format)
+            worksheet.write(row, 2, before_to_programa, number_format)
+            worksheet.write(row, 3, before_to_concurrente, number_format)
+            worksheet.write(row, 4, before_to_total, number_format)
+            worksheet.write(row, 5, after_to_programa, number_format)
+            worksheet.write(row, 6, after_to_concurrente, number_format)
+            worksheet.write(row, 7, after_to_total, number_format)
+            row += 1
+
+            # Calculate rubro destination totals (all activities)
+            rubro_to_lines = self.env['sec.activity.budget.line'].search([
+                ('stage_id', '=', stage.id),
+                ('rubro_id', '=', rubro_to.id)
+            ])
+
+            before_rubro_to_programa = sum(
+                (line.amount_programa or 0.0) - (transfer.amount_programa or 0.0)
+                if line.id == line_to.id else (line.amount_programa or 0.0)
+                for line in rubro_to_lines
+            )
+            before_rubro_to_concurrente = sum(
+                (line.amount_concurrente or 0.0) - (transfer.amount_concurrente or 0.0)
+                if line.id == line_to.id else (line.amount_concurrente or 0.0)
+                for line in rubro_to_lines
+            )
+            before_rubro_to_total = before_rubro_to_programa + before_rubro_to_concurrente
+
+            after_rubro_to_programa = sum(line.amount_programa or 0.0 for line in rubro_to_lines)
+            after_rubro_to_concurrente = sum(line.amount_concurrente or 0.0 for line in rubro_to_lines)
+            after_rubro_to_total = after_rubro_to_programa + after_rubro_to_concurrente
+
+            # Rubro destination total
+            worksheet.write(row, 0, f'  Total {rubro_to.name}', subheader_format)
+            worksheet.write(row, 1, 'Total Rubro', subheader_format)
+            worksheet.write(row, 2, before_rubro_to_programa, total_format)
+            worksheet.write(row, 3, before_rubro_to_concurrente, total_format)
+            worksheet.write(row, 4, before_rubro_to_total, total_format)
+            worksheet.write(row, 5, after_rubro_to_programa, total_format)
+            worksheet.write(row, 6, after_rubro_to_concurrente, total_format)
+            worksheet.write(row, 7, after_rubro_to_total, total_format)
+            row += 2  # Extra space between transfers
+
+        workbook.close()
+
+        # Create attachment
+        filename = f"historial_transferencias_{stage.name}_{fields.Date.today()}.xlsx"
+        attachment = self.env['ir.attachment'].create({
+            'name': filename,
+            'type': 'binary',
+            'datas': base64.b64encode(output.getvalue()),
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        output.close()
 
         # Return download action
         return {
