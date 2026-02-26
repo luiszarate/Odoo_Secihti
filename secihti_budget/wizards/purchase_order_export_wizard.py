@@ -313,7 +313,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
 
         writer = csv.DictWriter(
             buffer, fieldnames=fieldnames, extrasaction='ignore',
-            delimiter=';', quoting=csv.QUOTE_ALL,
+            delimiter='\t',
         )
         writer.writerow(headers)
         for row in rows:
