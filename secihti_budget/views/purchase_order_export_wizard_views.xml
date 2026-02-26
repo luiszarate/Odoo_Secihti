@@ -8,6 +8,7 @@
                 <group>
                     <field name="stage_id"/>
                     <field name="state_filter"/>
+                    <field name="export_mode"/>
                 </group>
                 <group attrs="{'invisible': [('file_data', '=', False)]}">
                     <field name="filename" readonly="1"/>
