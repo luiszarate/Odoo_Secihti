@@ -138,7 +138,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                             'concepto': concepto,
                             'fecha_pago': fecha_pago,
                             'no_poliza': no_poliza,
-                            'beneficiario': beneficiario,
+                            'beneficiario': proveedor,
                             'observaciones': observaciones,
                         }
 
@@ -153,7 +153,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                                 'iva': self._format_number(self._apply_percentage(iva, 70)),
                                 'impuestos_retenidos': self._format_number(self._apply_percentage(impuestos_retenidos, 70)),
                                 'monto_total': self._format_number(self._apply_percentage(monto_total, 70)),
-                                'monto_pagado': self._format_number(self._apply_percentage(monto_total, 70)),
+                                'monto_pagado': self._format_number(monto_total),
                             })
                             rows.append(prog_row)
                             row_number += 1
@@ -168,7 +168,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                                 'iva': self._format_number(self._apply_percentage(iva, 30)),
                                 'impuestos_retenidos': self._format_number(self._apply_percentage(impuestos_retenidos, 30)),
                                 'monto_total': self._format_number(self._apply_percentage(monto_total, 30)),
-                                'monto_pagado': self._format_number(self._apply_percentage(monto_total, 30)),
+                                'monto_pagado': self._format_number(monto_total),
                             })
                             rows.append(conc_row)
                             row_number += 1
@@ -239,7 +239,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                 'iva': self._format_number(self._apply_percentage(iva, 70)),
                 'impuestos_retenidos': self._format_number(self._apply_percentage(impuestos_retenidos, 70)),
                 'monto_total': self._format_number(self._apply_percentage(monto_total, 70)),
-                'monto_pagado': self._format_number(self._apply_percentage(monto_total, 70)),
+                'monto_pagado': self._format_number(monto_total),
             })
 
             conc_row = dict(base_row)
@@ -251,7 +251,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                 'iva': self._format_number(self._apply_percentage(iva, 30)),
                 'impuestos_retenidos': self._format_number(self._apply_percentage(impuestos_retenidos, 30)),
                 'monto_total': self._format_number(self._apply_percentage(monto_total, 30)),
-                'monto_pagado': self._format_number(self._apply_percentage(monto_total, 30)),
+                'monto_pagado': self._format_number(monto_total),
             })
             return [prog_row, conc_row]
         else:
