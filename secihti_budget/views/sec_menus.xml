@@ -16,5 +16,6 @@
     <menuitem id="menu_sec_reports" name="Reportes" parent="menu_sec_root" sequence="50" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_export" name="Exportar presupuesto (Excel)" parent="menu_sec_reports" action="action_sec_export_report" sequence="10" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_purchase_order_export" name="Exportar ordenes de compra (CSV)" parent="menu_sec_reports" action="action_sec_purchase_order_export" sequence="20" groups="secihti_budget.group_sec_admin"/>
+    <menuitem id="menu_sec_assets_report" name="Reporte de Bienes" parent="menu_sec_reports" action="action_sec_assets_report" sequence="30" groups="secihti_budget.group_sec_admin"/>
     <menuitem id="menu_sec_import" name="Importar actividades (CSV)" parent="menu_sec_root" action="action_sec_import_activity" sequence="60" groups="secihti_budget.group_sec_admin"/>
 </odoo>
