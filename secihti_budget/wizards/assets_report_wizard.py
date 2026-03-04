@@ -19,7 +19,7 @@ class SecAssetsReportWizard(models.TransientModel):
     rubro_ids = fields.Many2many("sec.rubro", string="Rubros", required=True)
     min_amount = fields.Float(
         string="Monto mínimo",
-        help="Solo incluir líneas de orden de compra con monto mayor a este valor. Dejar en 0 para incluir todas.",
+        help="Solo incluir órdenes de compra cuyo Total MXN manual sea mayor a este valor. Dejar en 0 para incluir todas.",
         default=0.0,
     )
     file_data = fields.Binary(string="Archivo", readonly=True)
@@ -77,6 +77,8 @@ class SecAssetsReportWizard(models.TransientModel):
             ("sec_rubro_id", "in", self.rubro_ids.ids),
             ("state", "in", ["purchase", "done"]),
         ]
+        if self.min_amount:
+            domain.append(("sec_total_mxn_manual", ">=", self.min_amount))
         return self.env["purchase.order"].search(domain, order="date_order asc")
 
     def _build_rows(self, orders):
@@ -84,19 +86,17 @@ class SecAssetsReportWizard(models.TransientModel):
         rows = []
         consecutivo = 1
         control_installed = self._is_control_interno_installed()
-        min_amount = self.min_amount or 0.0
 
         for order in orders:
             rubro_name = order.sec_rubro_id.name if order.sec_rubro_id else ""
             purchase_date = order.date_order
+            currency_name = order.currency_id.name if order.currency_id else ""
 
             # Get control interno data for this order (if available)
             ci_lines = []
             if control_installed:
                 ci_lines = self._get_control_interno_lines(order)
 
-            # Build a lookup: we'll use the first CI line for shared data
-            # if multiple CI lines exist, we take the first one
             ci_line = ci_lines[0] if ci_lines else None
 
             proveedor = ""
@@ -122,10 +122,7 @@ class SecAssetsReportWizard(models.TransientModel):
             for po_line in order.order_line:
                 if po_line.price_subtotal <= 0:
                     continue
-                if min_amount and po_line.price_subtotal < min_amount:
-                    continue
 
-                # Generate inventory number: imgo + purchase_date + consecutive
                 sku = "IMGO-%s-%04d" % (
                     self._format_date_for_sku(purchase_date),
                     consecutivo,
@@ -144,7 +141,9 @@ class SecAssetsReportWizard(models.TransientModel):
                     "fecha_contrato": "N/A",
                     "fecha_entrega_contrato": "N/A",
                     "folio_fiscal": folio_fiscal,
+                    "precio_unitario": po_line.price_unit or 0.0,
                     "monto_factura": monto_factura,
+                    "moneda": currency_name,
                     "fecha_pago": fecha_pago,
                     "poliza": "",
                     "fecha_recepcion": fecha_pago,
@@ -174,7 +173,9 @@ class SecAssetsReportWizard(models.TransientModel):
             "Fecha de Contrato",
             "Fecha de entrega según contrato",
             "Folio Fiscal de la Factura",
+            "Precio Unitario",
             "Monto total de la factura",
+            "Moneda",
             "Fecha de Pago",
             "Póliza",
             "Fecha de Recepción",
@@ -214,7 +215,7 @@ class SecAssetsReportWizard(models.TransientModel):
         headers = self._get_headers()
 
         # Column widths
-        col_widths = [12, 20, 40, 12, 25, 18, 18, 22, 22, 16, 12, 18, 20, 14, 22, 14, 14, 22]
+        col_widths = [12, 20, 40, 12, 25, 18, 18, 22, 16, 22, 10, 16, 12, 18, 20, 14, 22, 14, 14, 22]
         for i, w in enumerate(col_widths):
             sheet.set_column(i, i, w)
 
@@ -224,27 +225,31 @@ class SecAssetsReportWizard(models.TransientModel):
 
         # Write data rows
         for row_idx, row_data in enumerate(rows, start=1):
-            sheet.write_number(row_idx, 0, row_data["consecutivo"], number_fmt)
-            sheet.write(row_idx, 1, row_data["rubro"], text_fmt)
-            sheet.write(row_idx, 2, row_data["articulo"], text_fmt)
-            sheet.write_number(row_idx, 3, row_data["cantidad"], number_fmt)
-            sheet.write(row_idx, 4, row_data["proveedor"], text_fmt)
-            sheet.write(row_idx, 5, row_data["fecha_contrato"], text_fmt)
-            sheet.write(row_idx, 6, row_data["fecha_entrega_contrato"], text_fmt)
-            sheet.write(row_idx, 7, row_data["folio_fiscal"], text_fmt)
+            col = 0
+            sheet.write_number(row_idx, col, row_data["consecutivo"], number_fmt); col += 1
+            sheet.write(row_idx, col, row_data["rubro"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["articulo"], text_fmt); col += 1
+            sheet.write_number(row_idx, col, row_data["cantidad"], number_fmt); col += 1
+            sheet.write(row_idx, col, row_data["proveedor"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["fecha_contrato"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["fecha_entrega_contrato"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["folio_fiscal"], text_fmt); col += 1
+            sheet.write_number(row_idx, col, row_data["precio_unitario"], money_fmt); col += 1
             if row_data["monto_factura"] != "":
-                sheet.write_number(row_idx, 8, row_data["monto_factura"], money_fmt)
+                sheet.write_number(row_idx, col, row_data["monto_factura"], money_fmt)
             else:
-                sheet.write(row_idx, 8, "", text_fmt)
-            sheet.write(row_idx, 9, row_data["fecha_pago"], text_fmt)
-            sheet.write(row_idx, 10, row_data["poliza"], text_fmt)
-            sheet.write(row_idx, 11, row_data["fecha_recepcion"], text_fmt)
-            sheet.write(row_idx, 12, row_data["modificatorios"], text_fmt)
-            sheet.write(row_idx, 13, row_data["no_serie"], text_fmt)
-            sheet.write(row_idx, 14, row_data["no_inventario"], text_fmt)
-            sheet.write(row_idx, 15, row_data["marca"], text_fmt)
-            sheet.write(row_idx, 16, row_data["modelo"], text_fmt)
-            sheet.write(row_idx, 17, row_data["evidencia_fotografica"], text_fmt)
+                sheet.write(row_idx, col, "", text_fmt)
+            col += 1
+            sheet.write(row_idx, col, row_data["moneda"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["fecha_pago"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["poliza"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["fecha_recepcion"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["modificatorios"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["no_serie"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["no_inventario"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["marca"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["modelo"], text_fmt); col += 1
+            sheet.write(row_idx, col, row_data["evidencia_fotografica"], text_fmt)
 
         if rows:
             sheet.autofilter(0, 0, len(rows), len(headers) - 1)
