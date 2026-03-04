@@ -24,6 +24,7 @@
         "views/import_activity_wizard_views.xml",
         "views/export_report_wizard_views.xml",
         "views/purchase_order_export_wizard_views.xml",
+        "views/assets_report_wizard_views.xml",
         "views/sec_attachment_export_wizard_view.xml",
         "views/sec_menus.xml",
         "security/ir.model.access.csv",

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sec_assets_report_wizard" model="ir.ui.view">
+        <field name="name">sec.assets.report.wizard.form</field>
+        <field name="model">sec.assets.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reporte de Bienes" create="false" edit="false">
+                <group>
+                    <field name="stage_id"/>
+                    <field name="rubro_ids" widget="many2many_tags"/>
+                    <field name="min_amount"/>
+                </group>
+                <group attrs="{'invisible': [('file_data', '=', False)]}">
+                    <field name="filename" readonly="1"/>
+                    <field name="file_data" filename="filename" readonly="1"/>
+                </group>
+                <footer attrs="{'invisible': [('file_data', '!=', False)]}">
+                    <button string="Generar Reporte" type="object" name="action_export" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+                <footer attrs="{'invisible': [('file_data', '=', False)]}">
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sec_assets_report" model="ir.actions.act_window">
+        <field name="name">Reporte de Bienes</field>
+        <field name="res_model">sec.assets.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sec_assets_report_wizard"/>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('secihti_budget.group_sec_admin'))]"/>
+    </record>
+</odoo>
