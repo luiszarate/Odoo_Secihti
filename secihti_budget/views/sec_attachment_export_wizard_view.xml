@@ -4,7 +4,7 @@
         <field name="name">sec.attachment.export.wizard.form</field>
         <field name="model">sec.attachment.export.wizard</field>
         <field name="arch" type="xml">
-            <form string="Exportar adjuntos" create="false" edit="false">
+            <form string="Exportar adjuntos y órdenes" create="false" edit="false">
                 <group>
                     <field name="project_id"/>
                     <field name="date_from"/>
@@ -12,6 +12,10 @@
                     <field name="state_filter"/>
                     <field name="rubro_id"/>
                     <field name="include_pending"/>
+                </group>
+                <group string="Contenido a exportar">
+                    <field name="export_attachments"/>
+                    <field name="export_purchase_orders"/>
                 </group>
                 <group attrs="{'invisible': [('file_data', '=', False)]}">
                     <field name="filename" readonly="1"/>
