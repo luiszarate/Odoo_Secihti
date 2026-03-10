@@ -5,27 +5,71 @@
         <field name="model">sec.attachment.export.wizard</field>
         <field name="arch" type="xml">
             <form string="Exportar adjuntos y órdenes" create="false" edit="false">
-                <group>
-                    <field name="project_id"/>
-                    <field name="date_from"/>
-                    <field name="date_to"/>
-                    <field name="state_filter"/>
-                    <field name="rubro_id"/>
-                    <field name="include_pending"/>
+                <field name="state" invisible="1"/>
+
+                <!-- DRAFT: filter form + checkboxes -->
+                <group attrs="{'invisible': [('state', 'not in', ['draft', False])]}">
+                    <group>
+                        <field name="project_id"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="state_filter"/>
+                        <field name="rubro_id"/>
+                        <field name="include_pending"/>
+                    </group>
+                    <group string="Contenido a exportar">
+                        <field name="export_attachments"/>
+                        <field name="export_purchase_orders"/>
+                    </group>
                 </group>
-                <group string="Contenido a exportar">
-                    <field name="export_attachments"/>
-                    <field name="export_purchase_orders"/>
+
+                <!-- PROCESSING: spinner + progress -->
+                <group attrs="{'invisible': [('state', '!=', 'processing')]}">
+                    <div colspan="2" class="text-center">
+                        <h3><i class="fa fa-spinner fa-spin"/> Generando exportación...</h3>
+                        <field name="progress_message" readonly="1" nolabel="1"/>
+                        <p class="text-muted mt-2">
+                            Haga clic en "Actualizar" para verificar el progreso.
+                        </p>
+                    </div>
                 </group>
-                <group attrs="{'invisible': [('file_data', '=', False)]}">
+
+                <!-- DONE: download link -->
+                <group attrs="{'invisible': [('state', '!=', 'done')]}">
+                    <div colspan="2" class="text-center">
+                        <h3><i class="fa fa-check text-success"/> Exportación completada</h3>
+                        <field name="progress_message" readonly="1" nolabel="1"/>
+                    </div>
                     <field name="filename" readonly="1"/>
                     <field name="file_data" filename="filename" readonly="1"/>
                 </group>
-                <footer attrs="{'invisible': [('file_data', '!=', False)]}">
+
+                <!-- ERROR: error message -->
+                <group attrs="{'invisible': [('state', '!=', 'error')]}">
+                    <div colspan="2" class="alert alert-danger">
+                        <h4><i class="fa fa-exclamation-triangle"/> Error en la exportación</h4>
+                        <field name="error_message" readonly="1" nolabel="1"/>
+                    </div>
+                </group>
+
+                <!-- Footer: DRAFT -->
+                <footer attrs="{'invisible': [('state', 'not in', ['draft', False])]}">
                     <button string="Descargar" type="object" name="action_export" class="btn-primary"/>
                     <button string="Cerrar" class="btn-secondary" special="cancel"/>
                 </footer>
-                <footer attrs="{'invisible': [('file_data', '=', False)]}">
+                <!-- Footer: PROCESSING -->
+                <footer attrs="{'invisible': [('state', '!=', 'processing')]}">
+                    <button string="Actualizar" type="object" name="action_refresh" class="btn-primary"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+                <!-- Footer: DONE -->
+                <footer attrs="{'invisible': [('state', '!=', 'done')]}">
+                    <button string="Nueva exportación" type="object" name="action_reset" class="btn-default"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel"/>
+                </footer>
+                <!-- Footer: ERROR -->
+                <footer attrs="{'invisible': [('state', '!=', 'error')]}">
+                    <button string="Reintentar" type="object" name="action_reset" class="btn-primary"/>
                     <button string="Cerrar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
