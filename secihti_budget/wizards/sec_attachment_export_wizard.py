@@ -3,7 +3,8 @@ import base64
 import io
 import zipfile
 
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 
 
 class SecAttachmentExportWizard(models.TransientModel):
@@ -25,11 +26,19 @@ class SecAttachmentExportWizard(models.TransientModel):
     )
     rubro_id = fields.Many2one("sec.rubro", string="Rubro / Tipo de gasto")
     include_pending = fields.Boolean(string="Incluir MXN pendiente", default=False)
+    export_attachments = fields.Boolean(string="Adjuntos", default=True)
+    export_purchase_orders = fields.Boolean(
+        string="Órdenes de compra (PDF)", default=False
+    )
     file_data = fields.Binary(string="Archivo", readonly=True)
     filename = fields.Char(string="Nombre de archivo", readonly=True)
 
     def action_export(self):
         self.ensure_one()
+        if not self.export_attachments and not self.export_purchase_orders:
+            raise UserError(
+                _("Debe seleccionar al menos una opción de exportación.")
+            )
         orders = self._get_orders()
         zip_buffer = self._build_zip_buffer(orders)
         filename = self._build_filename()
@@ -76,23 +85,40 @@ class SecAttachmentExportWizard(models.TransientModel):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
             for order in orders:
-                attachments = self.env["ir.attachment"].search(
-                    [
-                        ("res_model", "=", "purchase.order"),
-                        ("res_id", "=", order.id),
-                        ("type", "=", "binary"),
-                    ]
-                )
-                if not attachments:
-                    continue
-                for attachment in attachments:
-                    if not attachment.datas:
-                        continue
-                    filename = getattr(attachment, "datas_fname", False) or attachment.name or "adjunto"
-                    arcname = self._get_attachment_path(order, filename)
-                    zip_file.writestr(arcname, base64.b64decode(attachment.datas))
+                if self.export_attachments:
+                    attachments = self.env["ir.attachment"].search(
+                        [
+                            ("res_model", "=", "purchase.order"),
+                            ("res_id", "=", order.id),
+                            ("type", "=", "binary"),
+                        ]
+                    )
+                    for attachment in attachments:
+                        if not attachment.datas:
+                            continue
+                        filename = (
+                            getattr(attachment, "datas_fname", False)
+                            or attachment.name
+                            or "adjunto"
+                        )
+                        arcname = self._get_attachment_path(order, filename)
+                        zip_file.writestr(
+                            arcname, base64.b64decode(attachment.datas)
+                        )
+
+                if self.export_purchase_orders:
+                    pdf_content = self._render_order_pdf(order)
+                    if pdf_content:
+                        pdf_filename = "%s.pdf" % order.name.replace("/", "-")
+                        arcname = self._get_attachment_path(order, pdf_filename)
+                        zip_file.writestr(arcname, pdf_content)
         buffer.seek(0)
         return buffer
+
+    def _render_order_pdf(self, order):
+        report = self.env.ref("purchase.action_report_purchase_order")
+        pdf_content, _content_type = report._render_qweb_pdf([order.id])
+        return pdf_content
 
     def _get_attachment_path(self, order, filename):
         if self.rubro_id:
@@ -108,9 +134,19 @@ class SecAttachmentExportWizard(models.TransientModel):
     def _build_filename(self):
         project_label = self.project_id.code or self.project_id.name or "Proyecto"
         if self.date_from or self.date_to:
-            date_from_label = fields.Date.to_string(self.date_from) if self.date_from else "inicio"
-            date_to_label = fields.Date.to_string(self.date_to) if self.date_to else "hoy"
+            date_from_label = (
+                fields.Date.to_string(self.date_from) if self.date_from else "inicio"
+            )
+            date_to_label = (
+                fields.Date.to_string(self.date_to) if self.date_to else "hoy"
+            )
             range_label = "%s_a_%s" % (date_from_label, date_to_label)
         else:
             range_label = "todas_las_fechas"
-        return "Adjuntos_%s_%s.zip" % (project_label, range_label)
+        if self.export_attachments and self.export_purchase_orders:
+            prefix = "Adjuntos_y_OC"
+        elif self.export_purchase_orders:
+            prefix = "Ordenes_Compra"
+        else:
+            prefix = "Adjuntos"
+        return "%s_%s_%s.zip" % (prefix, project_label, range_label)
