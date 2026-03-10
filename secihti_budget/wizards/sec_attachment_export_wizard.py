@@ -89,6 +89,7 @@ class SecAttachmentExportWizard(models.TransientModel):
                 "error_message": False,
             }
         )
+        self.env.cr.commit()
         self._launch_background_export()
         return self._reopen_wizard()
 
