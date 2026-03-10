@@ -128,67 +128,73 @@ class SecAttachmentExportWizard(models.TransientModel):
         wizard_id = self.id
 
         def _generate():
-            try:
-                with odoo.registry(db_name).cursor() as new_cr:
-                    env = odoo.api.Environment(new_cr, uid, {})
-                    wizard = env["sec.attachment.export.wizard"].browse(wizard_id)
-                    if not wizard.exists():
-                        _logger.warning(
-                            "Export wizard %s no longer exists, aborting.",
-                            wizard_id,
-                        )
-                        return
-
-                    orders = wizard._get_orders()
-                    total = len(orders)
-                    wizard.write(
-                        {
-                            "progress_message": _(
-                                "Procesando %d órdenes..."
-                            ) % total,
-                        }
-                    )
-                    new_cr.commit()
-
-                    zip_buffer = wizard._build_zip_buffer_with_progress(
-                        orders, new_cr
-                    )
-                    filename = wizard._build_filename()
-
-                    wizard.write(
-                        {
-                            "file_data": base64.b64encode(zip_buffer.getvalue()),
-                            "filename": filename,
-                            "state": "done",
-                            "progress_message": _(
-                                "Exportación completada: %d órdenes."
-                            ) % total,
-                        }
-                    )
-                    new_cr.commit()
-            except Exception as e:
-                _logger.exception(
-                    "Background export failed for wizard %s", wizard_id
-                )
+            with odoo.api.Environment.manage():
                 try:
-                    with odoo.registry(db_name).cursor() as err_cr:
-                        env = odoo.api.Environment(err_cr, uid, {})
+                    with odoo.registry(db_name).cursor() as new_cr:
+                        env = odoo.api.Environment(new_cr, uid, {})
                         wizard = env["sec.attachment.export.wizard"].browse(
                             wizard_id
                         )
-                        if wizard.exists():
-                            wizard.write(
-                                {
-                                    "state": "error",
-                                    "error_message": str(e),
-                                    "progress_message": False,
-                                }
+                        if not wizard.exists():
+                            _logger.warning(
+                                "Export wizard %s no longer exists, aborting.",
+                                wizard_id,
                             )
-                        err_cr.commit()
-                except Exception:
+                            return
+
+                        orders = wizard._get_orders()
+                        total = len(orders)
+                        wizard.write(
+                            {
+                                "progress_message": _(
+                                    "Procesando %d órdenes..."
+                                ) % total,
+                            }
+                        )
+                        new_cr.commit()
+
+                        zip_buffer = wizard._build_zip_buffer_with_progress(
+                            orders, new_cr
+                        )
+                        filename = wizard._build_filename()
+
+                        wizard.write(
+                            {
+                                "file_data": base64.b64encode(
+                                    zip_buffer.getvalue()
+                                ),
+                                "filename": filename,
+                                "state": "done",
+                                "progress_message": _(
+                                    "Exportación completada: %d órdenes."
+                                ) % total,
+                            }
+                        )
+                        new_cr.commit()
+                except Exception as e:
                     _logger.exception(
-                        "Failed to write error state for wizard %s", wizard_id
+                        "Background export failed for wizard %s", wizard_id
                     )
+                    try:
+                        with odoo.registry(db_name).cursor() as err_cr:
+                            env = odoo.api.Environment(err_cr, uid, {})
+                            wizard = env[
+                                "sec.attachment.export.wizard"
+                            ].browse(wizard_id)
+                            if wizard.exists():
+                                wizard.write(
+                                    {
+                                        "state": "error",
+                                        "error_message": str(e),
+                                        "progress_message": False,
+                                    }
+                                )
+                            err_cr.commit()
+                    except Exception:
+                        _logger.exception(
+                            "Failed to write error state for wizard %s",
+                            wizard_id,
+                        )
 
         thread = threading.Thread(
             target=_generate,
