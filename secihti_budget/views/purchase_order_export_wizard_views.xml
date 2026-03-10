@@ -9,6 +9,7 @@
                     <field name="stage_id"/>
                     <field name="state_filter"/>
                     <field name="export_mode"/>
+                    <field name="include_po_number"/>
                 </group>
                 <group attrs="{'invisible': [('file_data', '=', False)]}">
                     <field name="filename" readonly="1"/>

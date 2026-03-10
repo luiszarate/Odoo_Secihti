@@ -31,6 +31,10 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
         string="Modo de exportación",
         required=True,
     )
+    include_po_number = fields.Boolean(
+        string="Incluir orden de compra",
+        default=False,
+    )
     file_data = fields.Binary(string="Archivo", readonly=True)
     filename = fields.Char(string="Nombre de archivo", readonly=True)
 
@@ -130,6 +134,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                         fecha_pago = self._format_date(line.fecha_pago)
 
                         base_row = {
+                            'no_orden_compra': order.name or "",
                             'no_rubro': no_rubro,
                             'nombre_rubro': nombre_rubro,
                             'no_factura': no_factura,
@@ -189,7 +194,8 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                     new_rows = self._build_rows_for_order(
                         row_number, order, tipo_aportacion, tipo_gasto,
                         no_rubro, nombre_rubro, monto_total, beneficiario,
-                        no_poliza, observaciones, split_mode
+                        no_poliza, observaciones, split_mode,
+                        no_orden_compra=order.name or "",
                     )
                     rows.extend(new_rows)
                     row_number += len(new_rows)
@@ -197,7 +203,8 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
                 new_rows = self._build_rows_for_order(
                     row_number, order, tipo_aportacion, tipo_gasto,
                     no_rubro, nombre_rubro, monto_total, beneficiario,
-                    no_poliza, observaciones, split_mode
+                    no_poliza, observaciones, split_mode,
+                    no_orden_compra=order.name or "",
                 )
                 rows.extend(new_rows)
                 row_number += len(new_rows)
@@ -207,7 +214,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
     def _build_rows_for_order(self, row_number, order, tipo_aportacion,
                               tipo_gasto, no_rubro, nombre_rubro,
                               monto_total, beneficiario, no_poliza,
-                              observaciones, split_mode):
+                              observaciones, split_mode, no_orden_compra=""):
         """Build row(s) when control interno is not available or no lines found.
 
         Returns a list of rows (1 row for single mode, 2 for split mode).
@@ -217,6 +224,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
         impuestos_retenidos = 0.0
 
         base_row = {
+            'no_orden_compra': no_orden_compra,
             'no_rubro': no_rubro,
             'nombre_rubro': nombre_rubro,
             'no_factura': order.name or "",
@@ -272,6 +280,10 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
         buffer = io.StringIO()
         fieldnames = [
             'no',
+        ]
+        if self.include_po_number:
+            fieldnames.append('no_orden_compra')
+        fieldnames += [
             'tipo_aportacion',
             'tipo_gasto',
             'no_rubro',
@@ -292,6 +304,7 @@ class SecPurchaseOrderExportWizard(models.TransientModel):
         ]
         headers = {
             'no': 'N°',
+            'no_orden_compra': 'Orden de Compra',
             'tipo_aportacion': 'Tipo de Aportación (Fondo/Concurrente)',
             'tipo_gasto': 'Tipo de Gasto (Corriente/Inversión)',
             'no_rubro': 'N° Rubro',
