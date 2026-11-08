@@ -1,1 +1,3 @@
+> **Archivado el 2026-11-08.** Este repositorio contiene la versión para **Odoo 14 CE** de `secihti_budget`, que dejó de usarse ese día, cuando el ERP de Imago Aerospace pasó a Odoo 19. La versión para Odoo 19 se mantiene en el repositorio de la migración (`luiszarate/odoo-migration`, privado), carpeta `addons/19.0/secihti_budget`. `secihti_budget_planning` se fusionó en `secihti_budget`.
+
 # Odoo_Secihti
